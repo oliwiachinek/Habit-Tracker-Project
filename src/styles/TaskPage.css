@@ -1,0 +1,249 @@
+/* Global Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* Background */
+.task-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-image: url('https://media1.tenor.com/m/fJidxFCpU9kAAAAC/stars-sparkles.gif');
+    background-size: cover;
+    background-position: center;
+    padding: 20px;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    color: black;
+}
+
+header h1 {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+nav {
+    display: flex;
+    gap: 10px;
+}
+
+nav button {
+    background: none;
+    border: 2px solid white;
+    color: white;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+nav button.active, nav button:hover {
+    background: white;
+    color: black;
+}
+
+/* Task Grid */
+.task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin-top: 20px;
+}
+
+/* Task Box */
+.task-box {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.task-box h2 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+/* Add Button */
+.add-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #6b46c1;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.add-btn:hover {
+    background: #553c9a;
+}
+
+/* Task List */
+.task-box ul {
+    list-style: none;
+    margin-top: 10px;
+}
+
+.task-box li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.points {
+    font-weight: bold;
+    margin-left: auto;
+    margin-right: 10px;
+}
+
+.special-task {
+    color: red;
+    font-weight: bold;
+}
+
+/* Popup Modal */
+.popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    display: none;
+}
+
+.popup.active {
+    display: block;
+}
+
+.popup input, .popup select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+/* Frequency Pickers */
+.frequency-picker {
+    margin: 15px 0;
+}
+
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin: 10px 0;
+}
+
+.days-grid label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.days-grid label.selected {
+    background-color: #553c9a;
+    color: white;
+}
+
+.input-with-button {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.input-with-button input,
+.input-with-button select {
+    flex-grow: 1;
+}
+
+.selected-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.selected-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border-radius: 20px;
+}
+
+.selected-item button {
+    margin-left: 5px;
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+}
+
+/* Buttons */
+button {
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.select-all-btn {
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.select-all-btn.active {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
+}
+
+.popup-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.popup-buttons button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    color: white;
+}
+
+.popup-buttons button:first-child {
+    background-color: #4CAF50;
+}
+
+.popup-buttons button:last-child {
+    background-color: #f44336;
+}
