@@ -24,4 +24,23 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.put('/:id', authMiddleware, async (req, res) => {
+    const { streak } = req.body;
+    try {
+        const habit = await updateHabit(req.params.id, streak);
+        res.json(habit);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+router.delete('/:id', authMiddleware, async (req, res) => {
+    try {
+        const response = await deleteHabit(req.params.id);
+        res.json(response);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 module.exports = router;
