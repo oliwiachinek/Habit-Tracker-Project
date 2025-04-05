@@ -1,0 +1,280 @@
+.rewards-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-image: url('https://media1.tenor.com/m/fJidxFCpU9kAAAAC/stars-sparkles.gif');
+    background-size: cover;
+    background-position: center;
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.points-display {
+    background: #6b46c1;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+nav {
+    display: flex;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.nav-button {
+    background: none;
+    border: 2px solid #6b46c1;
+    color: #6b46c1;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.3s;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.nav-button.active, .nav-button:hover {
+    background: #6b46c1;
+    color: white;
+}
+
+.rewards-content {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    flex: 1;
+}
+
+.rewards-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.rewards-header h2 {
+    color: #6b46c1;
+    margin: 0;
+}
+
+.add-reward-btn {
+    padding: 8px 15px;
+    background: #6b46c1;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.add-reward-btn:hover {
+    background: #553c9a;
+    transform: translateY(-2px);
+}
+
+.add-reward-form {
+    background: #f8f5ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #e0d6ff;
+}
+
+.add-reward-form h3 {
+    margin-top: 0;
+    color: #6b46c1;
+}
+
+.add-reward-form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.add-reward-form button {
+    width: 100%;
+    padding: 10px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.reward-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.reward-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.reward-card.purchased {
+    opacity: 0.7;
+    position: relative;
+}
+
+.reward-card.purchased::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.reward-image {
+    height: 150px;
+    overflow: hidden;
+}
+
+.reward-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.reward-info {
+    padding: 15px;
+}
+
+.reward-info h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.reward-price {
+    font-weight: bold;
+    color: #6b46c1;
+    margin-bottom: 15px;
+}
+
+.reward-info button {
+    width: 100%;
+    padding: 8px;
+    background: #6b46c1;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.reward-info button:hover {
+    background: #553c9a;
+}
+
+.reward-info button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.purchased-label {
+    text-align: center;
+    color: #4CAF50;
+    font-weight: bold;
+    padding: 8px;
+    background: #e8f5e9;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .header-left {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    nav {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .rewards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.delete-reward-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 0, 0, 0.7);
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0;
+}
+
+.delete-reward-btn:hover {
+    background: rgba(255, 0, 0, 0.9);
+    transform: scale(1.1);
+}
+
+.reward-image {
+    position: relative;
+}
+
+.reward-card:hover .delete-reward-btn {
+    opacity: 1;
+}

@@ -12,70 +12,112 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    min-height: 100vh;
+    padding: 2rem;
     background-image: url('https://media1.tenor.com/m/fJidxFCpU9kAAAAC/stars-sparkles.gif');
     background-size: cover;
     background-position: center;
-    position: relative;
 }
 
 /* Title */
 .auth-title-container {
-    position: absolute;
-    top: 10%;
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: bold;
     color: white;
-    text-align: center;
+    margin-bottom: 2rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Forms Container */
 .auth-forms {
     display: flex;
-    gap: 20px;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 /* Card Styles */
 .auth-card {
-    width: 320px;
-    height: 380px;
-    padding: 24px;
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
     border-radius: 16px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    margin: 1rem;
+    transition: transform 0.3s ease-in-out;
+}
+
+.auth-card:hover {
+    transform: scale(1.05);
 }
 
 /* Title */
 .auth-title {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 600;
-    margin-bottom: 16px;
+    margin-bottom: 1.5rem;
+    color: #2d3748;
 }
 
 /* Input Fields */
 .auth-input {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: white;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.9);
+    transition: border-color 0.3s ease;
+}
+
+.auth-input:focus {
+    outline: none;
+    border-color: #6b46c1;
 }
 
 /* Buttons */
 .auth-button {
-    padding: 10px 20px;
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    background-color: #6b46c1;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background 0.3s;
-    background-color: #6b46c1; /* Purple */
+    font-weight: 600;
+    transition: background-color 0.3s ease;
 }
 
 .auth-button:hover {
-    background-color: #553c9a; /* Darker Purple */
+    background-color: #553c9a;
+}
+
+/* Registration Prompt */
+.auth-register-prompt {
+    margin-top: 2rem;
+    text-align: center;
+    color: black;
+}
+
+.auth-register-prompt p {
+    margin-bottom: 0.5rem;
+}
+
+.auth-register-prompt button {
+    background: none;
+    border: none;
+    color: black;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+
+.auth-register-prompt button:hover {
+    color: black;
 }

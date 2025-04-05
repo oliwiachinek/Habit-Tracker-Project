@@ -26,9 +26,24 @@ header {
     color: black;
 }
 
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
 header h1 {
     font-size: 2rem;
     font-weight: bold;
+}
+
+.points-display {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: #6b46c1;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 nav {
@@ -36,7 +51,7 @@ nav {
     gap: 10px;
 }
 
-nav button {
+nav button, .nav-button {
     background: none;
     border: 2px solid white;
     color: white;
@@ -44,9 +59,11 @@ nav button {
     cursor: pointer;
     border-radius: 5px;
     transition: 0.3s;
+    text-decoration: none;
+    font-size: 14px;
 }
 
-nav button.active, nav button:hover {
+nav button.active, nav button:hover, .nav-button:hover {
     background: white;
     color: black;
 }
