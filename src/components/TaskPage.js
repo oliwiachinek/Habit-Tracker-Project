@@ -32,7 +32,6 @@ const specialMonthlyTasks = [
     "Borrow and read a book from the library",
     "Try a completely new hobby for a day",
     "Volunteer for a local community event",
-    "Cook a meal from a different culture",
     "Write a letter to your future self",
     "Visit a museum or art gallery you've never been to",
     "Learn and perform a random act of kindness",
