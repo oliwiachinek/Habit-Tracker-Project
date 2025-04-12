@@ -10,7 +10,10 @@ const TaskBox = ({ title, tasks, onAddTask, onTaskComplete }) => {
             <ul>
                 {tasks.map((task, index) => (
                     <li key={index}>
-                        <span className={task.special ? "special-task" : ""}>{task.name}</span>
+                        {task.special && <span className="crown-icon">👑</span>}
+                        <span className={task.special ? "special-task" : ""}>
+                            {task.name}
+                        </span>
                         <span className="points">{task.points}p</span>
                         <input
                             type="checkbox"
@@ -23,6 +26,21 @@ const TaskBox = ({ title, tasks, onAddTask, onTaskComplete }) => {
     );
 };
 
+const specialMonthlyTasks = [
+    "Go for a 2-hour walk in nature",
+    "Make a handmade present for a friend",
+    "Borrow and read a book from the library",
+    "Try a completely new hobby for a day",
+    "Volunteer for a local community event",
+    "Cook a meal from a different culture",
+    "Write a letter to your future self",
+    "Visit a museum or art gallery you've never been to",
+    "Learn and perform a random act of kindness",
+    "Complete a digital detox for 24 hours",
+    "Take a class to learn something new",
+    "Organize a small gathering with friends"
+];
+
 export default function TaskPage() {
     const [date, setDate] = useState(new Date().toLocaleDateString());
     const [showPopup, setShowPopup] = useState(false);
@@ -31,7 +49,13 @@ export default function TaskPage() {
     const [tasks, setTasks] = useState({
         "Daily Tasks": [],
         "Weekly Tasks": [],
-        "Monthly Tasks": [],
+        "Monthly Tasks": [
+            {
+                name: specialMonthlyTasks[new Date().getMonth()],
+                points: "50",
+                special: true
+            }
+        ],
         "Yearly Tasks": []
     });
     const [currentCategory, setCurrentCategory] = useState("");
@@ -49,6 +73,11 @@ export default function TaskPage() {
     const allMonths = Array.from({ length: 12 }, (_, i) =>
         new Date(0, i).toLocaleString('en-US', { month: 'long' })
     );
+
+    const getCurrentSpecialTask = () => {
+        const currentMonth = new Date().getMonth();
+        return specialMonthlyTasks[currentMonth];
+    };
 
     const handleAddTask = (category) => {
         setCurrentCategory(category);
