@@ -15,34 +15,39 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
         setError(null);
 
         try {
+            let data;
+            let res;
+
             if (placeholders.length === 4) {
                 const [firstName, lastName, email, password] = inputs;
 
-                const res = await fetch("http://localhost:5000/api/auth/register", {
+                res = await fetch("http://localhost:5000/api/auth/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ firstName, lastName, email, password }),
                 });
 
+                data = await res.json();
+
                 if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.message || "Registration failed");
+                    throw new Error(data.message || "Registration failed");
                 }
             } else if (placeholders.length === 2) {
                 const [email, password] = inputs;
 
-                const res = await fetch("http://localhost:5000/api/auth/login", {
+                res = await fetch("http://localhost:5000/api/auth/login", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ email, password }),
                 });
 
-                const data = await res.json();
+                data = await res.json();
 
                 if (!res.ok) {
                     throw new Error(data.message || "Login failed");
                 }
-
+            }
+            if (data?.token) {
                 localStorage.setItem("token", data.token);
             }
 

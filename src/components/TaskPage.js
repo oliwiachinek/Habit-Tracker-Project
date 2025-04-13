@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react';
 import "../styles/TaskPage.css";
 import { Link } from 'react-router-dom';
 
@@ -26,21 +26,10 @@ const TaskBox = ({ title, tasks, onAddTask, onTaskComplete }) => {
     );
 };
 
-const specialMonthlyTasks = [
-    "Go for a 2-hour walk in nature",
-    "Make a handmade present for a friend",
-    "Borrow and read a book from the library",
-    "Try a completely new hobby for a day",
-    "Volunteer for a local community event",
-    "Write a letter to your future self",
-    "Visit a museum or art gallery you've never been to",
-    "Learn and perform a random act of kindness",
-    "Complete a digital detox for 24 hours",
-    "Take a class to learn something new",
-    "Organize a small gathering with friends"
-];
-
-export default function TaskPage() {
+const TaskPage = ({ userId }) => {
+    const [specialTask, setSpecialTask] = useState(null);
+    const [specialError, setSpecialError] = useState('');
+    const [specialStatusMsg, setSpecialStatusMsg] = useState('');
     const [date, setDate] = useState(new Date().toLocaleDateString());
     const [showPopup, setShowPopup] = useState(false);
     const [taskTitle, setTaskTitle] = useState("");
@@ -48,13 +37,7 @@ export default function TaskPage() {
     const [tasks, setTasks] = useState({
         "Daily Tasks": [],
         "Weekly Tasks": [],
-        "Monthly Tasks": [
-            {
-                name: specialMonthlyTasks[new Date().getMonth()],
-                points: "50",
-                special: true
-            }
-        ],
+        "Monthly Tasks": [],
         "Yearly Tasks": []
     });
     const [currentCategory, setCurrentCategory] = useState("");
@@ -73,10 +56,78 @@ export default function TaskPage() {
         new Date(0, i).toLocaleString('en-US', { month: 'long' })
     );
 
-    const getCurrentSpecialTask = () => {
-        const currentMonth = new Date().getMonth();
-        return specialMonthlyTasks[currentMonth];
-    };
+    useEffect(() => {
+        const fetchTasks = async () => {
+            try {
+                const res = await fetch('http://localhost:5000/api/habits', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!res.ok) throw new Error('Failed to fetch tasks');
+                const data = await res.json();
+
+                const grouped = {
+                    "Daily Tasks": [],
+                    "Weekly Tasks": [],
+                    "Monthly Tasks": [],
+                    "Yearly Tasks": []
+                };
+
+                data.forEach(task => {
+                    switch (task.category) {
+                        case 'daily':
+                            grouped["Daily Tasks"].push(task);
+                            break;
+                        case 'weekly':
+                            grouped["Weekly Tasks"].push(task);
+                            break;
+                        case 'monthly':
+                            grouped["Monthly Tasks"].push(task);
+                            break;
+                        case 'yearly':
+                            grouped["Yearly Tasks"].push(task);
+                            break;
+                        default:
+                            break;
+                    }
+                });
+
+                setTasks(grouped);
+
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchTasks();
+    }, []);
+
+
+    useEffect(() => {
+        const fetchSpecialTask = async () => {
+            try {
+                const res = await fetch(`http://localhost:5000/specialTasks/${userId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!res.ok) throw new Error('No special task available');
+                const data = await res.json();
+                setSpecialTask(data);
+            } catch (err) {
+                console.warn(err.message);
+                setSpecialError('No special task available right now.');
+            }
+        };
+
+        fetchSpecialTask();
+    }, []);
 
     const handleAddTask = (category) => {
         setCurrentCategory(category);
@@ -88,16 +139,57 @@ export default function TaskPage() {
         setShowPopup(true);
     };
 
-    const handleTaskComplete = (category, index, isChecked) => {
-        const updatedTasks = { ...tasks };
-        const task = updatedTasks[category][index];
+    const handleTaskComplete = async (category, taskIndex, isChecked) => {
+        const allTasks = Object.values(tasks).flat();
+        if (specialTask) allTasks.push(specialTask);
 
-        if (isChecked) {
-            setTotalPoints(prev => prev + parseInt(task.points));
-        } else {
-            setTotalPoints(prev => prev - parseInt(task.points));
+        const task = allTasks[taskIndex];
+        const delta = isChecked ? parseInt(task.points) : -parseInt(task.points);
+
+        try {
+            const token = localStorage.getItem('token');
+
+            if (task.special) {
+                const res = await fetch(`http://localhost:5000/specialTasks/${task.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json',
+                        'Authorization' : `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ status: isChecked ? 'completed' : 'pending' }),
+                });
+
+                if (!res.ok) throw new Error('Failed to update special task status');
+
+                const updated = await res.json();
+                setSpecialTask(prev => ({ ...prev, status: updated.status }));
+            } else {
+                const updatedCategoryTasks = [...tasks[category]];
+                updatedCategoryTasks[taskIndex] = {
+                    ...updatedCategoryTasks[taskIndex],
+                    completed: isChecked
+                };
+                setTasks(prev => ({
+                    ...prev,
+                    [category]: updatedCategoryTasks
+                }));
+            }
+
+            const pointsRes = await fetch(`http://localhost:5000/api/users/${userId}/points`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json',
+                'Authorization' : `Bearer ${token}`,},
+                body: JSON.stringify({ delta }),
+            });
+
+            if (!pointsRes.ok) throw new Error('Failed to update user points');
+
+            setTotalPoints(prev => prev + delta);
+
+        } catch (err) {
+            console.error('Task completion failed:', err);
         }
     };
+
 
     const toggleAllDays = () => {
         if (selectedDays.length === allDays.length) {
@@ -115,7 +207,7 @@ export default function TaskPage() {
         }
     };
 
-    const handleSaveTask = () => {
+    const handleSaveTask = async () => {
         if (!taskTitle || !taskPoints) {
             alert("Please fill in task name and points.");
             return;
@@ -169,19 +261,43 @@ export default function TaskPage() {
         if (!isValid) return;
 
         const newTask = {
-            name: taskTitle,
-            points: taskPoints,
-            schedule: schedule
-        };
+            title: taskTitle,
+            points: parseInt(taskPoints),
+            expires_at: isOneTimeTask ? new Date().toISOString() : null,
+            user_id: userId,
+            category: currentCategory.toLowerCase().replace(" tasks", ""),
+            schedule: schedule,
 
-        setTasks(prevTasks => ({
-            ...prevTasks,
-            [currentCategory]: [...prevTasks[currentCategory], newTask]
+    };
+        try {
+
+            const response = await fetch('http://localhost:5000/api/habits', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization' : `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: JSON.stringify(newTask),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save task');
+            }
+
+            const savedTask = await response.json();
+
+            setTasks(prevTasks => ({
+                ...prevTasks,
+                [currentCategory]: [...prevTasks[currentCategory], savedTask]
         }));
 
         setShowPopup(false);
         setTaskTitle("");
         setTaskPoints("");
+        } catch (error) {
+            console.error("Error saving task:", error);
+            alert("Failed to save task. Please try again.");
+        }
     };
 
     const addWeek = () => {
@@ -417,4 +533,7 @@ export default function TaskPage() {
             )}
         </div>
     );
-}
+};
+
+
+export default TaskPage;

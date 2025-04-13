@@ -33,7 +33,6 @@ const StreaksPage = () => {
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
     const currentDay = currentDate.getDate();
 
-    // Sample data with proper structure
     const [tasks] = useState([
         {
             id: 1,
@@ -61,7 +60,6 @@ const StreaksPage = () => {
         }
     ]);
 
-    // Clean up chart on unmount
     useEffect(() => {
         const chart = chartRef.current;
         return () => {
@@ -71,7 +69,6 @@ const StreaksPage = () => {
         };
     }, []);
 
-    // Prepare chart data with proper structure
     const chartData = {
         labels: days.map(day => day.toString()),
         datasets: tasks.map(task => ({
