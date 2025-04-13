@@ -1,23 +1,29 @@
 require('dotenv').config();
+require('./specialTaskScheduler'); 
+
 const express = require('express');
 const cors = require('cors');
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'http://localhost:3001',
   credentials: true
 }));
 app.use(express.json());
 
 const authRoutes = require('./routes/auth');
 const habitRoutes = require('./routes/habits');
+const specialTasksRouter = require('./routes/specialTasks');
 const rewardRoutes = require('./routes/rewards');
 const streakRoutes = require('./routes/streaks');
+const profileRoutes = require('./routes/profiles');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/rewards', rewardRoutes);
 app.use('/api/streaks', streakRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/specialTasks', specialTasksRoutes);
 
 app.get('/', (req, res) => {
   res.send('Habit Tracker API is running');
