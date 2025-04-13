@@ -6,14 +6,14 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:3001',
+  origin: 'http://localhost:3002',
   credentials: true
 }));
 app.use(express.json());
 
 const authRoutes = require('./routes/auth');
 const habitRoutes = require('./routes/habits');
-const specialTasksRouter = require('./routes/specialTasks');
+const specialTasksRoutes = require('./routes/specialTasks');
 const rewardRoutes = require('./routes/rewards');
 const streakRoutes = require('./routes/streaks');
 const profileRoutes = require('./routes/profiles');
