@@ -28,7 +28,7 @@ router.post('/:id/entries', async (req, res) => {
   try {
     const entry = await Habit.logEntry(
       req.params.id,
-      new Date().toISOString().split('T')[0] // Today's date
+      new Date().toISOString().split('T')[0] 
     );
     res.status(201).json(entry);
   } catch (error) {
