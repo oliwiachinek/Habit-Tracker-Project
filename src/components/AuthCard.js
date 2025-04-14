@@ -19,12 +19,12 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
             let res;
 
             if (placeholders.length === 4) {
-                const [firstName, lastName, email, password] = inputs;
+                const [email, password, lastName, firstName] = inputs;
 
                 res = await fetch("http://localhost:5000/api/auth/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ firstName, lastName, email, password }),
+                    body: JSON.stringify({ email, password, lastName, firstName }),
                 });
 
                 data = await res.json();
