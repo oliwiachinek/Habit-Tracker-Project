@@ -9,14 +9,14 @@ const RewardsPage = () => {
             id: 1,
             name: 'Movie Night',
             price: 50,
-            image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+            image: 'https://wck.org.pl/wp-content/uploads/2025/04/PL_MNCRFT_ONLINE_MASTER_MAIN_4000x2490_INTL-scaled.jpg',
             purchased: false
         },
         {
             id: 2,
             name: 'Ice Cream Treat',
             price: 30,
-            image: 'https://images.unsplash.com/photo-1566566220367-af8d77269124?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+            image: 'https://pbs.twimg.com/media/E_g87NiWQAQUBH9.jpg',
             purchased: false
         },
         {
