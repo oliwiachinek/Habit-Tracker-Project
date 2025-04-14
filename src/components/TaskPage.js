@@ -1,23 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import "../styles/TaskPage.css";
+import React, { useState, useEffect } from 'react';
+import '../styles/TaskPage.css';
 import { Link } from 'react-router-dom';
-
 const TaskBox = ({ title, tasks, onAddTask, onTaskComplete }) => {
     return (
         <div className="task-box">
             <h2>{title}</h2>
-            <button className="add-btn" onClick={() => onAddTask(title)}>+</button>
+            <button className="add-btn" onClick={() => onAddTask(title)}>+</
+                button>
             <ul>
                 {tasks.map((task, index) => (
                     <li key={index}>
-                        {task.special && <span className="crown-icon">👑</span>}
+                        {task.special && <span className="crown-icon">
+�
+</span>}
                         <span className={task.special ? "special-task" : ""}>
-                            {task.name}
-                        </span>
+ {task.name}
+ </span>
                         <span className="points">{task.points}p</span>
                         <input
                             type="checkbox"
-                            onChange={(e) => onTaskComplete(title, index, e.target.checked)}
+                            onChange={(e) => onTaskComplete(title, index,
+                                e.target.checked)}
                         />
                     </li>
                 ))}
@@ -25,11 +28,11 @@ const TaskBox = ({ title, tasks, onAddTask, onTaskComplete }) => {
         </div>
     );
 };
-
-const TaskPage = ({ userId }) => {
-    const [specialTask, setSpecialTask] = useState(null);
-    const [specialError, setSpecialError] = useState('');
-    const [specialStatusMsg, setSpecialStatusMsg] = useState('');
+const specialMonthlyTasks = [
+    "Go for a 2-hour walk in nature",
+    "Make a handmade present for a friend"
+];
+export default function TaskPage() {
     const [date, setDate] = useState(new Date().toLocaleDateString());
     const [showPopup, setShowPopup] = useState(false);
     const [taskTitle, setTaskTitle] = useState("");
@@ -37,7 +40,14 @@ const TaskPage = ({ userId }) => {
     const [tasks, setTasks] = useState({
         "Daily Tasks": [],
         "Weekly Tasks": [],
-        "Monthly Tasks": [],
+        "Monthly Tasks": [
+            {
+                name: specialMonthlyTasks[new Date().getMonth() %
+                specialMonthlyTasks.length],
+                points: "50",
+                special: true
+            }
+        ],
         "Yearly Tasks": []
     });
     const [currentCategory, setCurrentCategory] = useState("");
@@ -50,85 +60,62 @@ const TaskPage = ({ userId }) => {
     const [newYear, setNewYear] = useState("");
     const [isOneTimeTask, setIsOneTimeTask] = useState(false);
     const [totalPoints, setTotalPoints] = useState(0);
-
+    const [message, setMessage] = useState('');
     const allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const allMonths = Array.from({ length: 12 }, (_, i) =>
         new Date(0, i).toLocaleString('en-US', { month: 'long' })
     );
-
     useEffect(() => {
+        // Fetch tasks from backend when component mounts
         const fetchTasks = async () => {
+            const token = localStorage.getItem("token");
             try {
                 const res = await fetch('http://localhost:5000/api/habits', {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${token}`
                     }
                 });
-
                 if (!res.ok) throw new Error('Failed to fetch tasks');
                 const data = await res.json();
-
-                const grouped = {
+                // Transform backend data to match frontend structure
+                const transformedTasks = {
                     "Daily Tasks": [],
                     "Weekly Tasks": [],
-                    "Monthly Tasks": [],
+                    "Monthly Tasks": [
+                        {
+                            name: specialMonthlyTasks[new Date().getMonth() %
+                            specialMonthlyTasks.length],
+                            points: "50",
+                            special: true
+                        }
+                    ],
                     "Yearly Tasks": []
                 };
-
                 data.forEach(task => {
-                    switch (task.category) {
-                        case 'daily':
-                            grouped["Daily Tasks"].push(task);
-                            break;
-                        case 'weekly':
-                            grouped["Weekly Tasks"].push(task);
-                            break;
-                        case 'monthly':
-                            grouped["Monthly Tasks"].push(task);
-                            break;
-                        case 'yearly':
-                            grouped["Yearly Tasks"].push(task);
-                            break;
-                        default:
-                            break;
+                    const taskObj = {
+                        name: task.name,
+                        points: task.points,
+                        _id: task._id
+                    };
+                    if (task.category === 'daily') {
+                        transformedTasks["Daily Tasks"].push(taskObj);
+                    } else if (task.category === 'weekly') {
+                        transformedTasks["Weekly Tasks"].push(taskObj);
+                    } else if (task.category === 'monthly') {
+                        transformedTasks["Monthly Tasks"].push(taskObj);
+                    } else if (task.category === 'yearly') {
+                        transformedTasks["Yearly Tasks"].push(taskObj);
                     }
                 });
-
-                setTasks(grouped);
-
-            } catch (error) {
-                console.error(error);
+                setTasks(transformedTasks);
+            } catch (err) {
+                console.error('Error fetching tasks:', err);
+                setMessage('Error fetching tasks');
             }
         };
-
         fetchTasks();
     }, []);
-
-
-    useEffect(() => {
-        const fetchSpecialTask = async () => {
-            try {
-                const res = await fetch(`http://localhost:5000/specialTasks/${userId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-
-                if (!res.ok) throw new Error('No special task available');
-                const data = await res.json();
-                setSpecialTask(data);
-            } catch (err) {
-                console.warn(err.message);
-                setSpecialError('No special task available right now.');
-            }
-        };
-
-        fetchSpecialTask();
-    }, []);
-
     const handleAddTask = (category) => {
         setCurrentCategory(category);
         setSelectedDays([]);
@@ -138,59 +125,38 @@ const TaskPage = ({ userId }) => {
         setIsOneTimeTask(false);
         setShowPopup(true);
     };
-
-    const handleTaskComplete = async (category, taskIndex, isChecked) => {
-        const allTasks = Object.values(tasks).flat();
-        if (specialTask) allTasks.push(specialTask);
-
-        const task = allTasks[taskIndex];
-        const delta = isChecked ? parseInt(task.points) : -parseInt(task.points);
-
-        try {
-            const token = localStorage.getItem('token');
-
-            if (task.special) {
-                const res = await fetch(`http://localhost:5000/specialTasks/${task.id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json',
-                        'Authorization' : `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ status: isChecked ? 'completed' : 'pending' }),
-                });
-
-                if (!res.ok) throw new Error('Failed to update special task status');
-
-                const updated = await res.json();
-                setSpecialTask(prev => ({ ...prev, status: updated.status }));
+    const handleTaskComplete = async (category, index, isChecked) => {
+        const task = tasks[category][index];
+        if (!task._id) {
+            // Special task (like monthly special)
+            if (isChecked) {
+                setTotalPoints(prev => prev + parseInt(task.points));
             } else {
-                const updatedCategoryTasks = [...tasks[category]];
-                updatedCategoryTasks[taskIndex] = {
-                    ...updatedCategoryTasks[taskIndex],
-                    completed: isChecked
-                };
-                setTasks(prev => ({
-                    ...prev,
-                    [category]: updatedCategoryTasks
-                }));
+                setTotalPoints(prev => prev - parseInt(task.points));
             }
-
-            const pointsRes = await fetch(`http://localhost:5000/api/users/${userId}/points`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json',
-                'Authorization' : `Bearer ${token}`,},
-                body: JSON.stringify({ delta }),
+            return;
+        }
+        const token = localStorage.getItem("token");
+        try {
+            const res = await fetch(`http://localhost:5000/api/habits/${task._id}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ completed: isChecked })
             });
-
-            if (!pointsRes.ok) throw new Error('Failed to update user points');
-
-            setTotalPoints(prev => prev + delta);
-
+            if (!res.ok) throw new Error('Failed to update task completion');
+            if (isChecked) {
+                setTotalPoints(prev => prev + parseInt(task.points));
+            } else {
+                setTotalPoints(prev => prev - parseInt(task.points));
+            }
         } catch (err) {
-            console.error('Task completion failed:', err);
+            console.error('Error updating task completion:', err);
+            setMessage('Error updating task completion');
         }
     };
-
-
     const toggleAllDays = () => {
         if (selectedDays.length === allDays.length) {
             setSelectedDays([]);
@@ -198,7 +164,6 @@ const TaskPage = ({ userId }) => {
             setSelectedDays([...allDays]);
         }
     };
-
     const toggleAllMonths = () => {
         if (selectedMonths.length === allMonths.length) {
             setSelectedMonths([]);
@@ -206,21 +171,23 @@ const TaskPage = ({ userId }) => {
             setSelectedMonths([...allMonths]);
         }
     };
-
     const handleSaveTask = async () => {
         if (!taskTitle || !taskPoints) {
             alert("Please fill in task name and points.");
             return;
         }
-
+        let category = '';
+        if (currentCategory === "Daily Tasks") category = 'daily';
+        else if (currentCategory === "Weekly Tasks") category = 'weekly';
+        else if (currentCategory === "Monthly Tasks") category = 'monthly';
+        else if (currentCategory === "Yearly Tasks") category = 'yearly';
         let schedule = {};
         let isValid = true;
-
         if (isOneTimeTask) {
             schedule.isOneTime = true;
         } else {
-            switch (currentCategory) {
-                case "Daily Tasks":
+            switch (category) {
+                case "daily":
                     if (selectedDays.length === 0) {
                         isValid = false;
                         alert("Please select at least one day or choose 'Every Day'.");
@@ -228,7 +195,7 @@ const TaskPage = ({ userId }) => {
                         schedule.days = selectedDays;
                     }
                     break;
-                case "Weekly Tasks":
+                case "weekly":
                     if (selectedWeeks.length === 0) {
                         isValid = false;
                         alert("Please select at least one week or choose 'Every Week'.");
@@ -236,7 +203,7 @@ const TaskPage = ({ userId }) => {
                         schedule.weeks = selectedWeeks;
                     }
                     break;
-                case "Monthly Tasks":
+                case "monthly":
                     if (selectedMonths.length === 0) {
                         isValid = false;
                         alert("Please select at least one month or choose 'Every Month'.");
@@ -244,7 +211,7 @@ const TaskPage = ({ userId }) => {
                         schedule.months = selectedMonths;
                     }
                     break;
-                case "Yearly Tasks":
+                case "yearly":
                     if (selectedYears.length === 0) {
                         isValid = false;
                         alert("Please select at least one year or choose 'Every Year'.");
@@ -257,78 +224,67 @@ const TaskPage = ({ userId }) => {
                     break;
             }
         }
-
         if (!isValid) return;
-
         const newTask = {
-            title: taskTitle,
+            name: taskTitle,
             points: parseInt(taskPoints),
-            expires_at: isOneTimeTask ? new Date().toISOString() : null,
-            user_id: userId,
-            category: currentCategory.toLowerCase().replace(" tasks", ""),
-            schedule: schedule,
-
-    };
+            category,
+            isOneTime: isOneTimeTask,
+            schedule
+        };
+        const token = localStorage.getItem("token");
         try {
-
-            const response = await fetch('http://localhost:5000/api/habits', {
+            const res = await fetch('http://localhost:5000/api/habits', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization' : `Bearer ${localStorage.getItem('token')}`,
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(newTask),
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to save task');
-            }
-
-            const savedTask = await response.json();
-
-            setTasks(prevTasks => ({
-                ...prevTasks,
-                [currentCategory]: [...prevTasks[currentCategory], savedTask]
-        }));
-
-        setShowPopup(false);
-        setTaskTitle("");
-        setTaskPoints("");
-        } catch (error) {
-            console.error("Error saving task:", error);
-            alert("Failed to save task. Please try again.");
+            if (!res.ok) throw new Error('Failed to create task');
+            const data = await res.json();
+            // Update frontend state with the new task
+            const updatedTasks = { ...tasks };
+            updatedTasks[currentCategory].push({
+                name: data.name,
+                points: data.points,
+                _id: data._id
+            });
+            setTasks(updatedTasks);
+            setMessage(`Task created: ${data.name}`);
+            setShowPopup(false);
+            setTaskTitle("");
+            setTaskPoints("");
+        } catch (err) {
+            console.error('Error creating task:', err);
+            setMessage('Error creating task');
         }
     };
-
     const addWeek = () => {
         if (newWeek && !selectedWeeks.includes(newWeek)) {
             setSelectedWeeks([...selectedWeeks, newWeek]);
             setNewWeek("");
         }
     };
-
     const addMonth = () => {
         if (newMonth && !selectedMonths.includes(newMonth)) {
             setSelectedMonths([...selectedMonths, newMonth]);
             setNewMonth("");
         }
     };
-
     const addYear = () => {
         if (newYear && !selectedYears.includes(newYear)) {
             setSelectedYears([...selectedYears, newYear]);
             setNewYear("");
         }
     };
-
     const selectEveryWeek = () => {
         setSelectedWeeks(["Every Week"]);
     };
-
     const selectEveryYear = () => {
         setSelectedYears(["Every Year"]);
     };
-
     const toggleOneTimeTask = () => {
         setIsOneTimeTask(!isOneTimeTask);
         if (!isOneTimeTask) {
@@ -338,11 +294,9 @@ const TaskPage = ({ userId }) => {
             setSelectedYears([]);
         }
     };
-
     const removeItem = (list, setList, item) => {
         setList(list.filter(i => i !== item));
     };
-
     return (
         <div className="task-container">
             <header>
@@ -358,7 +312,7 @@ const TaskPage = ({ userId }) => {
                     <Link to="/account" className="nav-button">Account</Link>
                 </nav>
             </header>
-
+            {message && <p className="message">{message}</p>}
             <div className="task-grid">
                 {Object.keys(tasks).map(category => (
                     <TaskBox
@@ -370,19 +324,22 @@ const TaskPage = ({ userId }) => {
                     />
                 ))}
             </div>
-
             {showPopup && (
                 <div className="popup active">
                     <h3>Add New Task to {currentCategory}</h3>
-                    <input type="text" placeholder="Task Name"
-                           value={taskTitle}
-                           onChange={(e) => setTaskTitle(e.target.value)}
+                    <input
+                        type="text"
+                        placeholder="Task Name"
+                        value={taskTitle}
+                        onChange={(e) => setTaskTitle(e.target.value)}
                     />
-                    <input type="number" placeholder="Points"
-                           value={taskPoints}
-                           onChange={(e) => setTaskPoints(e.target.value)}
+                    <input
+                        type="number"
+                        placeholder="Points"
+                        value={taskPoints}
+                        onChange={(e) => setTaskPoints(e.target.value)}
+                        min="1"
                     />
-
                     <div className="frequency-picker">
                         <h4>Task Frequency:</h4>
                         <div className="select-all-buttons">
@@ -394,40 +351,41 @@ const TaskPage = ({ userId }) => {
                             </button>
                         </div>
                     </div>
-
                     {!isOneTimeTask && (
                         <>
                             {currentCategory === "Daily Tasks" && (
                                 <div className="frequency-picker">
                                     <h4>Repeat on these days:</h4>
                                     <button
-                                        className={`select-all-btn ${selectedDays.length === allDays.length ? 'active' : ''}`}
+                                        className={`select-all-btn ${selectedDays.length ===
+                                        allDays.length ? 'active' : ''}`}
                                         onClick={toggleAllDays}
                                     >
                                         {selectedDays.length === allDays.length ? 'Deselect All' : 'Every Day'}
-                                    </button>
-                                    <div className="days-grid">
+                                            </button>
+                                            <div className="days-grid">
                                         {allDays.map(day => (
-                                            <label key={day} className={selectedDays.includes(day) ? "selected" : ""}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedDays.includes(day)}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            setSelectedDays([...selectedDays, day]);
-                                                        } else {
-                                                            setSelectedDays(selectedDays.filter(d => d !== day));
-                                                        }
-                                                    }}
-                                                    hidden
-                                                />
-                                                {day}
-                                            </label>
-                                        ))}
-                                    </div>
+                                            <label key={day}
+                                        className={selectedDays.includes(day) ? "selected" : ""}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedDays.includes(day)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedDays([...selectedDays, day]);
+                                                } else {
+                                                    setSelectedDays(selectedDays.filter(d =>
+                                                        d !== day));
+                                                }
+                                            }}
+                                            hidden
+                                        />
+                                        {day}
+                                    </label>
+                                    ))}
                                 </div>
-                            )}
-
+                                </div>
+                                )}
                             {currentCategory === "Weekly Tasks" && (
                                 <div className="frequency-picker">
                                     <h4>Repeat on these weeks:</h4>
@@ -449,23 +407,24 @@ const TaskPage = ({ userId }) => {
                                     </div>
                                     <div className="selected-items">
                                         {selectedWeeks.map(week => (
-                                            <span key={week} className="selected-item">
-                                                {week === "Every Week" ? "Every Week" : week}
-                                                <button onClick={() => removeItem(selectedWeeks, setSelectedWeeks, week)}>×</button>
+                                            <span key={week} className="selected-item">{week === "Every Week" ? "Every Week" : week}
+                                                <button onClick={() =>
+                                                    removeItem(selectedWeeks, setSelectedWeeks, week)}>×</button>
                                             </span>
                                         ))}
                                     </div>
                                 </div>
                             )}
-
                             {currentCategory === "Monthly Tasks" && (
                                 <div className="frequency-picker">
                                     <h4>Repeat on these months:</h4>
                                     <button
-                                        className={`select-all-btn ${selectedMonths.length === allMonths.length ? 'active' : ''}`}
+                                        className={`select-all-btn ${selectedMonths.length
+                                        === allMonths.length ? 'active' : ''}`}
                                         onClick={toggleAllMonths}
                                     >
-                                        {selectedMonths.length === allMonths.length ? 'Deselect All' : 'Every Month'}
+                                        {selectedMonths.length === allMonths.length ?
+                                            'Deselect All' : 'Every Month'}
                                     </button>
                                     <div className="input-with-button">
                                         <select
@@ -474,22 +433,22 @@ const TaskPage = ({ userId }) => {
                                         >
                                             <option value="">Select a month</option>
                                             {allMonths.map(month => (
-                                                <option key={month} value={month}>{month}</option>
+                                                <option key={month} value={month}>{month}</
+                                                    option>
                                             ))}
                                         </select>
                                         <button onClick={addMonth}>Add Month</button>
                                     </div>
                                     <div className="selected-items">
                                         {selectedMonths.map(month => (
-                                            <span key={month} className="selected-item">
-                                                {month}
-                                                <button onClick={() => removeItem(selectedMonths, setSelectedMonths, month)}>×</button>
+                                            <span key={month} className="selected-item">{month}
+                                                <button onClick={() =>
+                                                    removeItem(selectedMonths, setSelectedMonths, month)}>×</button>
                                             </span>
                                         ))}
                                     </div>
                                 </div>
                             )}
-
                             {currentCategory === "Yearly Tasks" && (
                                 <div className="frequency-picker">
                                     <h4>Repeat on these years:</h4>
@@ -514,9 +473,9 @@ const TaskPage = ({ userId }) => {
                                     </div>
                                     <div className="selected-items">
                                         {selectedYears.map(year => (
-                                            <span key={year} className="selected-item">
-                                                {year === "Every Year" ? "Every Year" : year}
-                                                <button onClick={() => removeItem(selectedYears, setSelectedYears, year)}>×</button>
+                                            <span key={year} className="selected-item">{year === "Every Year" ? "Every Year" : year}
+                                                <button onClick={() => removeItem(selectedYears,
+                                                    setSelectedYears, year)}>×</button>
                                             </span>
                                         ))}
                                     </div>
@@ -524,7 +483,6 @@ const TaskPage = ({ userId }) => {
                             )}
                         </>
                     )}
-
                     <div className="popup-buttons">
                         <button onClick={handleSaveTask}>Add Task</button>
                         <button onClick={() => setShowPopup(false)}>Cancel</button>
@@ -533,7 +491,4 @@ const TaskPage = ({ userId }) => {
             )}
         </div>
     );
-};
-
-
-export default TaskPage;
+}
