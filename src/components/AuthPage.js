@@ -13,7 +13,7 @@ const AuthPage = () => {
                 <AuthCard
                     title="Log In"
                     bgColor="rgba(252, 231, 243, 0.9)"
-                    placeholders={["Email or Username", "Password"]}
+                    placeholders={["Email", "Password"]}
                     buttonText="Log In"
                     onClick={() => navigate("/taskpage")}
                 />
