@@ -5,7 +5,7 @@ import "../styles/AccountPage.css";
 
 const AccountPage = () => {
     const [user, setUser] = useState({
-        name: 'rikki tikki tavi',
+        name: 'John Doe',
         email: 'email@example.com',
         joinDate: 'Joined January 2023',
         avatar: 'https://i.pinimg.com/originals/89/43/34/8943343904432420c1d4046c93110dfb.jpg'
@@ -143,10 +143,9 @@ const AccountPage = () => {
                 </div>
 
                 <div className="account-actions">
-                    <button className="logout-btn">
+                        <Link to="/" className="logout-btn" >
                         <FiLogOut className="icon" />
-                        Log Out
-                    </button>
+                        Log Out</Link>
 
                     <button
                         className="delete-btn"
