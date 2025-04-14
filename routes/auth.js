@@ -4,9 +4,10 @@ const { registerUser, loginUser } = require('../models/User');
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, lastName, firstName } = req.body;
-    const user = await registerUser(email, password, lastName, firstName);
+    const { firstName, lastName, email, password} = req.body;
+    const user = await registerUser(firstName, lastName, email, password);
     res.status(201).json(user);
+
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
