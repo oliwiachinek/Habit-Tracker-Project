@@ -7,6 +7,7 @@ router.use(authMiddleware);
 
 router.post('/', async (req, res) => {
   try {
+    const userId = req.user.id;
     const { name, category, points, schedule } = req.body;
     const habit = await Habit.create(req.user.id, name, category, points, schedule);
     res.status(201).json(habit);
