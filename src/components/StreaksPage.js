@@ -33,6 +33,66 @@ const StreaksPage = () => {
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
     const currentDay = currentDate.getDate();
 
+    //adding fetches
+    //getstreak
+
+    useEffect(() => {
+  const fetchStreak = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/habits', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await res.json();
+      setStreak(data); // Assume you have a state variable like `const [streak, setStreak] = useState(null)`
+    } catch (err) {
+      console.error('Failed to fetch streak:', err);
+    }
+  };
+
+  fetchStreak();
+}, []);
+
+    //incrementstreak
+    const handleIncrement = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/habits', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const updated = await res.json();
+    setStreak(updated); // Update the streak state
+  } catch (err) {
+    console.error('Failed to increment streak:', err);
+  }
+};
+
+    //resetStreak
+
+    const handleReset = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/habits', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const reset = await res.json();
+    setStreak(reset);
+  } catch (err) {
+    console.error('Failed to reset streak:', err);
+  }
+};
+
+
+
     const [tasks] = useState([
         {
             id: 1,
