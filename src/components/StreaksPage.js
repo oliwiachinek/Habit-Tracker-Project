@@ -13,7 +13,6 @@ import {
     Legend
 } from 'chart.js';
 
-// Register ChartJS components
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -25,54 +24,78 @@ ChartJS.register(
 );
 
 const StreaksPage = () => {
+    const [tasks, setTasks] = useState([]);
     const chartRef = useRef(null);
     const currentDate = new Date();
     const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
     const currentYear = currentDate.getFullYear();
     const daysInMonth = new Date(currentYear, currentDate.getMonth() + 1, 0).getDate();
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    const [streakData, setStreakData] = useState(null);
     const currentDay = currentDate.getDate();
+    const getRandomColor = () => {
+        const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    };
 
-    //adding fetches
-    //getstreak
 
     useEffect(() => {
-  const fetchStreak = async () => {
-    try {
-      const res = await fetch('http://localhost:5000/api/habits', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        const fetchStreak = async () => {
+            try {
+                const res = await fetch('http://localhost:5000/api/streaks', {
+                    headers : {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const data = await res.json();
+
+                const processedTasks = data.map(habit => {
+                    const completedDays = habit.completions.map(dateStr => new Date(dateStr).getDate());
+
+                    return {
+                        id: habit.id,
+                        name: habit.name,
+                        completedDays,
+                        color: habit.color || getRandomColor()
+                    };
+                });
+
+                setTasks(processedTasks);
+            } catch (err) {
+                console.error('Failed to fetch streak:', err);
+            }
+        };
+
+        fetchStreak();
+    }, []);
+
+    const handleIncrement = async (habitId) => {
+        try {
+            const res = await fetch(`http://localhost:5000/api/habits/complete/${habitId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ completed: true }) // Optional, depending on your backend logic
+            });
+
+            const updated = await res.json();
+            console.log('Habit completed:', updated);
+
+            const streakRes = await fetch('http://localhost:5000/api/streaks', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const streakData = await streakRes.json();
+            setTasks(streakData);
+
+        } catch (err) {
+            console.error('Failed to increment streak:', err);
         }
-      });
-      const data = await res.json();
-      setStreak(data); // Assume you have a state variable like `const [streak, setStreak] = useState(null)`
-    } catch (err) {
-      console.error('Failed to fetch streak:', err);
-    }
-  };
+    };
 
-  fetchStreak();
-}, []);
-
-    //incrementstreak
-    const handleIncrement = async () => {
-  try {
-    const res = await fetch('http://localhost:5000/api/habits', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const updated = await res.json();
-    setStreak(updated); // Update the streak state
-  } catch (err) {
-    console.error('Failed to increment streak:', err);
-  }
-};
-
-    //resetStreak
 
     const handleReset = async () => {
   try {
@@ -85,40 +108,11 @@ const StreaksPage = () => {
     });
 
     const reset = await res.json();
-    setStreak(reset);
+    setStreakData(reset);
   } catch (err) {
     console.error('Failed to reset streak:', err);
   }
 };
-
-
-
-    const [tasks] = useState([
-        {
-            id: 1,
-            name: 'Wake up at 6',
-            completedDays: [1, 2, 3, 4, 5, 8, 9, 10, 12, 15, 16, 18, 20, 22, 24],
-            color: '#FF6384'
-        },
-        {
-            id: 2,
-            name: 'Skincare',
-            completedDays: [1, 2, 3, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
-            color: '#36A2EB'
-        },
-        {
-            id: 3,
-            name: 'Journaling',
-            completedDays: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23],
-            color: '#FFCE56'
-        },
-        {
-            id: 4,
-            name: '10k steps',
-            completedDays: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24],
-            color: '#4BC0C0'
-        }
-    ]);
 
     useEffect(() => {
         const chart = chartRef.current;
@@ -144,7 +138,6 @@ const StreaksPage = () => {
         }))
     };
 
-    // Fixed chart options
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,

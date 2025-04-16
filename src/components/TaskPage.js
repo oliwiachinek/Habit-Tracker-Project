@@ -116,6 +116,7 @@ export default function TaskPage() {
         };
         fetchTasks();
     }, []);
+
     const handleAddTask = (category) => {
         setCurrentCategory(category);
         setSelectedDays([]);
@@ -127,8 +128,8 @@ export default function TaskPage() {
     };
     const handleTaskComplete = async (category, index, isChecked) => {
         const task = tasks[category][index];
+
         if (!task._id) {
-            // Special task (like monthly special)
             if (isChecked) {
                 setTotalPoints(prev => prev + parseInt(task.points));
             } else {
@@ -136,18 +137,19 @@ export default function TaskPage() {
             }
             return;
         }
+
         const token = localStorage.getItem("token");
+
         try {
-            const res = await fetch(`http://localhost:5000/api/habits/${task._id}/complete`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ completed: isChecked })
-            });
-            if (!res.ok) throw new Error('Failed to update task completion');
             if (isChecked) {
+                const res = await fetch(`http://localhost:5000/api/streaks/complete/${task._id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!res.ok) throw new Error('Failed to update task completion');
                 setTotalPoints(prev => prev + parseInt(task.points));
             } else {
                 setTotalPoints(prev => prev - parseInt(task.points));
@@ -157,6 +159,7 @@ export default function TaskPage() {
             setMessage('Error updating task completion');
         }
     };
+
     const toggleAllDays = () => {
         if (selectedDays.length === allDays.length) {
             setSelectedDays([]);
