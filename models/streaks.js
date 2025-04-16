@@ -2,23 +2,35 @@ const pool = require('../config/db');
 
 const completeHabit = async (habitId, userId) => {
     try {
-        // Update streak count
-        const habit = await pool.query('SELECT streak FROM habits WHERE id = $1', [habitId]);
-        const newStreak = habit.rows[0].streak + 1;
+        const today = new Date().toISOString().split('T')[0];
 
-        await pool.query(
-            'UPDATE habits SET streak = $1 WHERE id = $2 RETURNING *',
-            [newStreak, habitId]
+        const alreadyCompleted = await pool.query(
+            `SELECT * FROM habit_completions 
+             WHERE habit_id = $1 AND user_id = $2 AND date_completed = $3`,
+            [habitId, userId, today]
         );
 
-      
-        await pool.query('UPDATE users SET points = points + 10 WHERE id = $1', [userId]);
+        if (alreadyCompleted.rows.length > 0) {
+            return { message: 'Habit already completed today!' };
+        }
 
-        return { message: 'Habit completed, streak increased, and points added!' };
+        await pool.query(
+            `INSERT INTO habit_completions (habit_id, user_id, date_completed)
+             VALUES ($1, $2, $3)`,
+            [habitId, userId, today]
+        );
+
+        await pool.query(
+            'UPDATE users SET points = points + 10 WHERE id = $1',
+            [userId]
+        );
+
+        return { message: 'Habit completed and points awarded!' };
     } catch (error) {
         throw error;
     }
 };
+
 
 
 const getUserStreaks = async (userId) => {

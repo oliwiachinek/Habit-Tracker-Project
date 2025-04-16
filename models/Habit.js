@@ -20,13 +20,13 @@ const Habit = {
     return result.rows;
   },
 
-  async logEntry(habitId, date) {
+  async logEntry(habitId, userId, date) {
     const result = await pool.query(
-      `INSERT INTO habit_entries 
-        (habit_id, entry_date, is_completed)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [habitId, date, true]
+      `INSERT INTO habit_completions (habit_id, user_id, date_completed)
+        VALUES ($1, $2, $3)
+        ON CONFLICT DO NOTHING  -- prevents duplicate completions for the same day
+        RETURNING *`,
+      [habitId, userId, date]
     );
     return result.rows[0];
   }

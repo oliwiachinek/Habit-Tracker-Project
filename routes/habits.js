@@ -29,12 +29,30 @@ router.post('/:id/entries', async (req, res) => {
   try {
     const entry = await Habit.logEntry(
       req.params.id,
-      new Date().toISOString().split('T')[0] 
+      req.user.id,
+      new Date().toISOString().split('T')[0]
     );
     res.status(201).json(entry);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
+
+router.get('/:id/completed-today', async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const result = await pool.query(
+      `SELECT * FROM habit_completions
+       WHERE habit_id = $1 AND user_id = $2 AND date_completed = $3`,
+      [req.params.id, req.user.id, today]
+    );
+
+    res.json({ completed: result.rows.length > 0 });
+  } catch (error) {
+    res.status(500).json({ error: 'Error checking completion status' });
+  }
+});
+
+
 
 module.exports = router;
