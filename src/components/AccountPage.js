@@ -1,29 +1,62 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FiUser, FiTrash2, FiLogOut, FiEdit, FiSave, FiX, FiUpload, FiCamera } from 'react-icons/fi';
 import "../styles/AccountPage.css";
 
 const AccountPage = () => {
     const [user, setUser] = useState({
-        name: 'John Doe',
-        email: 'email@example.com',
-        joinDate: 'Joined January 2023',
-        avatar: 'https://i.pinimg.com/originals/89/43/34/8943343904432420c1d4046c93110dfb.jpg'
+        name: '',
+        email: '',
+        joinDate: '',
+        avatar: ''
     });
-
     const [editing, setEditing] = useState(false);
     const [tempUser, setTempUser] = useState({...user});
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const response = await fetch('http://localhost:5000/api/user', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setUser(data);
+                setTempUser(data);
+            }
+        };
+        fetchUserData();
+    }, []);
 
     const handleEdit = () => {
         setTempUser({...user});
         setEditing(true);
     };
 
-    const handleSave = () => {
-        setUser(tempUser);
-        setEditing(false);
+    const handleSave = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/user', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: JSON.stringify(tempUser)
+            });
+
+            if (response.ok) {
+                const updatedUser = await response.json();
+                setUser(updatedUser);
+                setEditing(false);
+            } else {
+                throw new Error('Failed to update profile');
+            }
+        } catch (error) {
+            alert(error.message);
+        }
     };
 
     const handleCancel = () => {
@@ -50,10 +83,31 @@ const AccountPage = () => {
         fileInputRef.current.click();
     };
 
-    const handleDeleteAccount = () => {
-        // Add your account deletion logic here
-        alert('Account deletion would happen here');
-        setShowDeleteConfirm(false);
+    const handleDeleteAccount = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/user', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+
+            if (response.ok) {
+                alert('Account deleted successfully');
+                // Log out and redirect user
+                localStorage.removeItem('token');
+                window.location.href = '/login';  // or use `useNavigate` from react-router-dom
+            } else {
+                throw new Error('Failed to delete account');
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
     };
 
     return (
@@ -143,9 +197,10 @@ const AccountPage = () => {
                 </div>
 
                 <div className="account-actions">
-                        <Link to="/" className="logout-btn" >
+                    <button className="logout-btn" onClick={handleLogout}>
                         <FiLogOut className="icon" />
-                        Log Out</Link>
+                        Log Out
+                    </button>
 
                     <button
                         className="delete-btn"

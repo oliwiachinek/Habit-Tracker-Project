@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
 import "../styles/StreaksPage.css";
@@ -13,6 +13,7 @@ import {
     Legend
 } from 'chart.js';
 
+// Register ChartJS components
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -44,15 +45,19 @@ const StreaksPage = () => {
             name: 'Skincare',
             completedDays: [1, 2, 3, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
             color: '#36A2EB'
+        },
+        {
+            id: 3,
+            name: 'Journaling',
+            completedDays: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23],
+            color: '#FFCE56'
+        },
+        {
+            id: 4,
+            name: '10k steps',
+            completedDays: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24],
+            color: '#4BC0C0'
         }
-    ]);
-
-    const [friends] = useState([
-        { id: 1, name: 'Alex Johnson', streakPoints: 145, avatar: 'AJ' },
-        { id: 2, name: 'Sam Wilson', streakPoints: 132, avatar: 'SW' },
-        { id: 3, name: 'Taylor Smith', streakPoints: 98, avatar: 'TS' },
-        { id: 4, name: 'Jordan Lee', streakPoints: 87, avatar: 'JL' },
-        { id: 5, name: 'Casey Kim', streakPoints: 76, avatar: 'CK' },
     ]);
 
     useEffect(() => {
@@ -72,15 +77,14 @@ const StreaksPage = () => {
             borderColor: task.color,
             backgroundColor: task.color,
             borderWidth: 2,
-            pointRadius: days.map(day => day === currentDay ? 7 : 5),
+            pointRadius: 5,
             pointHoverRadius: 7,
-            pointBackgroundColor: days.map(day => day === currentDay ? '#FFA500' : task.color),
-            pointBorderColor: days.map(day => day === currentDay ? '#FFA500' : task.color),
             tension: 0.1,
             fill: false
         }))
     };
 
+    // Fixed chart options
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -140,17 +144,43 @@ const StreaksPage = () => {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        return `${context.dataset.label}`;
-                    },
-                    afterLabel: function(context) {
-                        return `Day ${context.label}`;
-                    },
-                    title: function() {
-                        return '';
+                        const label = context.dataset.label || '';
+                        return `${label}: Day ${context.parsed.x}`;
                     }
                 }
             }
         }
+    };
+
+    const calculateCurrentStreak = (completedDays) => {
+        let streak = 0;
+        const today = currentDate.getDate();
+
+        for (let day = today; day >= 1; day--) {
+            if (completedDays.includes(day)) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+
+        return streak;
+    };
+
+    const calculateLongestStreak = (completedDays) => {
+        let longest = 0;
+        let current = 0;
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            if (completedDays.includes(day)) {
+                current++;
+                longest = Math.max(longest, current);
+            } else {
+                current = 0;
+            }
+        }
+
+        return longest;
     };
 
     return (
@@ -170,6 +200,7 @@ const StreaksPage = () => {
 
             <div className="streaks-content">
                 <div className="chart-container">
+                    <h2>Daily Task Completion</h2>
                     <div className="chart-wrapper">
                         <Line
                             ref={chartRef}
@@ -180,34 +211,30 @@ const StreaksPage = () => {
                     </div>
                 </div>
 
-                <div className="leaderboard-container">
-                    <h2>Friends Leaderboard</h2>
-                    <div className="leaderboard-table">
-                        <table>
-                            <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Friend</th>
-                                <th>Streak Points</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {friends
-                                .sort((a, b) => b.streakPoints - a.streakPoints)
-                                .map((friend, index) => (
-                                    <tr key={friend.id}>
-                                        <td>{index + 1}</td>
-                                        <td>
-                                            <div className="friend-info">
-                                                <div className="friend-avatar">{friend.avatar}</div>
-                                                <div className="friend-name">{friend.name}</div>
-                                            </div>
-                                        </td>
-                                        <td>{friend.streakPoints}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                <div className="streaks-stats">
+                    <h2>Task Statistics</h2>
+                    <div className="stats-grid">
+                        {tasks.map(task => (
+                            <div key={task.id} className="stat-card" style={{ borderLeft: `5px solid ${task.color}` }}>
+                                <h3>{task.name}</h3>
+                                <div className="stat-values">
+                                    <div>
+                                        <span className="stat-label">Current Streak:</span>
+                                        <span className="stat-value">{calculateCurrentStreak(task.completedDays)} days</span>
+                                    </div>
+                                    <div>
+                                        <span className="stat-label">Longest Streak:</span>
+                                        <span className="stat-value">{calculateLongestStreak(task.completedDays)} days</span>
+                                    </div>
+                                    <div>
+                                        <span className="stat-label">Completion Rate:</span>
+                                        <span className="stat-value">
+                      {Math.round((task.completedDays.length / daysInMonth) * 100)}%
+                    </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
