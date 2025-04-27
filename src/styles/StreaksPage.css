@@ -88,54 +88,93 @@ nav {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.streaks-stats h2 {
+/* Leaderboard Styles */
+.leaderboard-container {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+    border: 1px solid #e0d6ff;
+}
+
+.leaderboard-container h2 {
     color: #6b46c1;
     margin-bottom: 20px;
     font-size: 1.5rem;
 }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+.leaderboard-table {
+    margin-top: 15px;
+    overflow-x: auto;
 }
 
-.stat-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    border-left: 5px solid;
+.leaderboard-table table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
 }
 
-.stat-card h3 {
-    margin: 0 0 15px 0;
-    color: #333;
-    font-size: 1.2rem;
+.leaderboard-table th {
+    background-color: #f5f3ff;
+    color: #6b46c1;
+    font-weight: 600;
+    padding: 15px;
+    text-align: left;
+    border-bottom: 2px solid #e0d6ff;
 }
 
-.stat-values {
+.leaderboard-table td {
+    padding: 15px;
+    border-bottom: 1px solid #f0ebff;
+    vertical-align: middle;
+}
+
+.leaderboard-table tr:last-child td {
+    border-bottom: none;
+}
+
+.leaderboard-table tr:hover {
+    background-color: #f9f7ff;
+}
+
+.friend-info {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.stat-values div {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 15px;
 }
 
-.stat-label {
+.friend-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: #6b46c1;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.friend-name {
     font-weight: 500;
-    color: #666;
+    color: #333;
 }
 
-.stat-value {
+/* Rank styling */
+.leaderboard-table td:first-child {
     font-weight: 600;
     color: #6b46c1;
 }
 
+/* Streak points styling */
+.leaderboard-table td:last-child {
+    font-weight: 600;
+    color: #6b46c1;
+}
+
+/* Responsive styles */
 @media (max-width: 768px) {
     header {
         flex-direction: column;
@@ -152,7 +191,32 @@ nav {
         justify-content: center;
     }
 
-    .stats-grid {
-        grid-template-columns: 1fr;
+    .chart-wrapper {
+        height: 300px;
+    }
+
+    .leaderboard-table {
+        min-width: 100%;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 10px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .streaks-content {
+        padding: 15px;
+    }
+
+    .friend-info {
+        gap: 8px;
+    }
+
+    .friend-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
     }
 }
