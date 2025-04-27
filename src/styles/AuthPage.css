@@ -121,3 +121,15 @@
 .auth-register-prompt button:hover {
     color: black;
 }
+
+.input-error {
+    border: 2px solid red;
+    background-color: #ffe6e6;
+}
+
+.auth-error {
+    color: red;
+    margin-top: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+}
