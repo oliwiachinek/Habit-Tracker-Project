@@ -19,7 +19,13 @@ router.post('/login', async (req, res) => {
     const token = await loginUser(email, password);
     res.json({ token });
   } catch (error) {
-    res.status(401).json({ error: error.message });
+    if (error.message === 'User not found') {
+      res.status(400).json({ message: 'Email not connected to an account.' });
+    } else if (error.message === 'Invalid password') {
+      res.status(400).json({ message: 'Incorrect password.' });
+    } else {
+      res.status(500).json({ message: 'Something went wrong, please try again.' });
+    }
   }
 });
 

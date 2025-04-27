@@ -3,6 +3,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const registerUser = async (firstName, lastName, email, password) => {
+  const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+  console.log(existingUser.rows);
+  if (existingUser.rows.lenghtb > 0) {
+    throw new Error('Email already in use');
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
   const result = await pool.query(
     'INSERT INTO users (first_name, last_name, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING *',
