@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/TaskPage.css';
 import { Link } from 'react-router-dom';
+
 const TaskBox = ({ title, tasks, onAddTask, onTaskComplete }) => {
     return (
         <div className="task-box">
@@ -28,10 +29,12 @@ const TaskBox = ({ title, tasks, onAddTask, onTaskComplete }) => {
         </div>
     );
 };
+
 const specialMonthlyTasks = [
     "Go for a 2-hour walk in nature",
     "Make a handmade present for a friend"
 ];
+
 export default function TaskPage() {
     const [date, setDate] = useState(new Date().toLocaleDateString());
     const [showPopup, setShowPopup] = useState(false);
@@ -66,7 +69,6 @@ export default function TaskPage() {
         new Date(0, i).toLocaleString('en-US', { month: 'long' })
     );
     useEffect(() => {
-        // Fetch tasks from backend when component mounts
         const fetchTasks = async () => {
             const token = localStorage.getItem("token");
             try {
@@ -78,7 +80,6 @@ export default function TaskPage() {
                 });
                 if (!res.ok) throw new Error('Failed to fetch tasks');
                 const data = await res.json();
-                // Transform backend data to match frontend structure
                 const transformedTasks = {
                     "Daily Tasks": [],
                     "Weekly Tasks": [],
@@ -126,38 +127,84 @@ export default function TaskPage() {
         setIsOneTimeTask(false);
         setShowPopup(true);
     };
-    const handleTaskComplete = async (category, index, isChecked) => {
+
+    useEffect(() => {
+        const savedTasks = localStorage.getItem('tasks');
+        const savedPoints = localStorage.getItem('totalPoints');
+
+        if (savedTasks) {
+            setTasks(JSON.parse(savedTasks));
+        }
+
+        if (savedPoints) {
+            setTotalPoints(parseInt(savedPoints, 10));
+        }
+    }, []);
+
+    const handleTaskComplete = async (category, index, isChecked, day) => {
         const task = tasks[category][index];
 
         if (!task._id) {
             if (isChecked) {
-                setTotalPoints(prev => prev + parseInt(task.points));
+                setTotalPoints(prev => prev + parseInt(task.points, 10));
             } else {
-                setTotalPoints(prev => prev - parseInt(task.points));
+                setTotalPoints(prev => prev - parseInt(task.points, 10));
             }
+
+            saveTasksToLocalStorage();
             return;
         }
 
-        const token = localStorage.getItem("token");
-
         try {
-            if (isChecked) {
-                const res = await fetch(`http://localhost:5000/api/streaks/complete/${task._id}`, {
+            const updatedTasks = tasks[category].map((taskItem, idx) => {
+                if (idx === index) {
+                    const wasCompleted = taskItem.completedDays?.includes(day);
+                    let updatedDays;
+
+                    if (wasCompleted) {
+                        updatedDays = taskItem.completedDays.filter(d => d !== day);
+                        setTotalPoints(prev => prev - parseInt(task.points));
+                    } else {
+                        updatedDays = [...taskItem.completedDays, day];
+                        setTotalPoints(prev => prev + parseInt(task.points));
+                    }
+
+                    return { ...taskItem, completedDays: updatedDays };
+                }
+                return taskItem;
+            });
+
+            setTasks({ ...tasks, [category]: updatedTasks });
+
+            saveTasksToLocalStorage();
+
+            const token = localStorage.getItem('token');
+            const formattedDate = new Date(day).toISOString().split('T')[0];
+
+            if (!isChecked) {
+                console.warn('Unmarking not supported in backend yet.');
+            } else {
+                console.log(`Posting completion for Task ID: ${task._id} on ${formattedDate}`);
+                const res = await fetch(`http://localhost:5000/api/habits/${task._id}/entries`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ date: formattedDate }),
                 });
 
                 if (!res.ok) throw new Error('Failed to update task completion');
-                setTotalPoints(prev => prev + parseInt(task.points));
-            } else {
-                setTotalPoints(prev => prev - parseInt(task.points));
             }
         } catch (err) {
             console.error('Error updating task completion:', err);
             setMessage('Error updating task completion');
         }
+    };
+
+    const saveTasksToLocalStorage = () => {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        localStorage.setItem('totalPoints', totalPoints);
     };
 
     const toggleAllDays = () => {
@@ -247,7 +294,6 @@ export default function TaskPage() {
             });
             if (!res.ok) throw new Error('Failed to create task');
             const data = await res.json();
-            // Update frontend state with the new task
             const updatedTasks = { ...tasks };
             updatedTasks[currentCategory].push({
                 name: data.name,
@@ -300,6 +346,22 @@ export default function TaskPage() {
     const removeItem = (list, setList, item) => {
         setList(list.filter(i => i !== item));
     };
+
+    const renderTasks = () => {
+        return Object.keys(tasks).map((category) => (
+            tasks[category].map((task, index) => (
+                <div key={index}>
+                    <input
+                        type="checkbox"
+                        checked={task.completedDays.includes(new Date().getDate())}
+                        onChange={(e) => handleTaskComplete(category, index, e.target.checked, new Date().getDate())}
+                    />
+                    {task.name}
+                </div>
+            ))
+        ));
+    };
+
     return (
         <div className="task-container">
             <header>

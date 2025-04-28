@@ -14,8 +14,8 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
     const [isPasswordTyping, setIsPasswordTyping] = useState(false);
 
     useEffect(() => {
-        setIsSubmitDisabled(!validateInputs(inputs));
-    }, [inputs]);
+        setIsSubmitDisabled(!validateInputs(inputs) || (placeholders.length === 4 && !isPasswordValid()));
+    }, [inputs, passwordValidations]);
 
     const handleChange = (index, value) => {
         const updatedInputs = [...inputs];
@@ -42,6 +42,11 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
         });
     };
 
+    const isPasswordValid = () => {
+        const { minLength, hasNumbersAndLetters, hasSpecialChar } = passwordValidations;
+        return minLength && hasNumbersAndLetters && hasSpecialChar;
+    };
+
     const validateInputs = (updatedInputs) => {
         let valid = true;
         const updatedErrors = [...errors];
@@ -50,6 +55,7 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
         updatedErrors.fill("");
 
         if (placeholders.length === 4) {
+            // Registration: First name, last name, email, password
             if (!firstName || !lastName) {
                 updatedErrors[0] = "Please enter your first and last name.";
                 valid = false;
@@ -59,8 +65,12 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
             } else if (!password) {
                 updatedErrors[3] = "Please enter a password.";
                 valid = false;
+            } else if (!isPasswordValid()) {
+                updatedErrors[3] = "Password does not meet the required criteria.";
+                valid = false;
             }
         } else if (placeholders.length === 2) {
+            // Login: Only email and password
             const [email, password] = updatedInputs;
             if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
                 updatedErrors[0] = "Please enter a valid email.";
@@ -94,7 +104,6 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
                 data = await res.json();
 
                 if (!res.ok) {
-                    // If the registration failed, show the error message
                     if (data.error && data.error.includes("users_email_key")) {
                         throw new Error("Email connected to an existing account.");
                     } else {
@@ -147,8 +156,6 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
         }
     };
 
-
-
     return (
         <div
             className="auth-card"
@@ -177,7 +184,7 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
                 <div className="password-requirements">
                     <ul>
                         <li className={passwordValidations.minLength ? "valid" : "invalid"}>
-                            At least 6 characters
+                            Must be at least 6 characters
                         </li>
                         <li className={passwordValidations.hasNumbersAndLetters ? "valid" : "invalid"}>
                             Must include numbers and letters
