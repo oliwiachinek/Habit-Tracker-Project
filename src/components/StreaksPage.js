@@ -55,6 +55,9 @@ const StreaksPage = () => {
         { id: 5, name: 'Casey Kim', streakPoints: 76, avatar: 'CK' },
     ]);
 
+    const [showAddFriendPopup, setShowAddFriendPopup] = useState(false);
+    const [friendEmail, setFriendEmail] = useState('');
+
     useEffect(() => {
         const chart = chartRef.current;
         return () => {
@@ -63,6 +66,21 @@ const StreaksPage = () => {
             }
         };
     }, []);
+
+    const handleAddFriend = () => {
+        setShowAddFriendPopup(true);
+    };
+
+    const handleClosePopup = () => {
+        setShowAddFriendPopup(false);
+        setFriendEmail('');
+    };
+
+    const handleSearchFriend = (e) => {
+        e.preventDefault();
+        console.log('Searching for friend with email:', friendEmail);
+        handleClosePopup();
+    };
 
     const chartData = {
         labels: days.map(day => day.toString()),
@@ -146,7 +164,7 @@ const StreaksPage = () => {
                         return `Day ${context.label}`;
                     },
                     title: function() {
-                        return ''; // Remove the title completely
+                        return '';
                     }
                 }
             }
@@ -208,9 +226,38 @@ const StreaksPage = () => {
                                 ))}
                             </tbody>
                         </table>
+                        <button className="add-friend-button" onClick={handleAddFriend}>
+                            + Add Friend
+                        </button>
                     </div>
                 </div>
             </div>
+
+            {showAddFriendPopup && (
+                <div className="popup-overlay">
+                    <div className="add-friend-popup">
+                        <h3>Add Friend</h3>
+                        <p>Search for your friend by their email address</p>
+                        <form onSubmit={handleSearchFriend}>
+                            <input
+                                type="email"
+                                placeholder="Enter friend's email"
+                                value={friendEmail}
+                                onChange={(e) => setFriendEmail(e.target.value)}
+                                required
+                            />
+                            <div className="popup-buttons">
+                                <button type="submit" className="search-button">
+                                    Search
+                                </button>
+                                <button type="button" className="cancel-button" onClick={handleClosePopup}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
