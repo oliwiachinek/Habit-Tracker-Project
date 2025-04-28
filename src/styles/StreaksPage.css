@@ -88,52 +88,178 @@ nav {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.streaks-stats h2 {
+.leaderboard-container {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+    border: 1px solid #e0d6ff;
+}
+
+.leaderboard-container h2 {
     color: #6b46c1;
     margin-bottom: 20px;
     font-size: 1.5rem;
 }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+.leaderboard-table {
+    margin-top: 15px;
+    overflow-x: auto;
 }
 
-.stat-card {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    border-left: 5px solid;
+.leaderboard-table table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
 }
 
-.stat-card h3 {
-    margin: 0 0 15px 0;
-    color: #333;
-    font-size: 1.2rem;
+.leaderboard-table th {
+    background-color: #f5f3ff;
+    color: #6b46c1;
+    font-weight: 600;
+    padding: 15px;
+    text-align: left;
+    border-bottom: 2px solid #e0d6ff;
 }
 
-.stat-values {
+.leaderboard-table td {
+    padding: 15px;
+    border-bottom: 1px solid #f0ebff;
+    vertical-align: middle;
+}
+
+.leaderboard-table tr:last-child td {
+    border-bottom: none;
+}
+
+.leaderboard-table tr:hover {
+    background-color: #f9f7ff;
+}
+
+.friend-info {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.stat-values div {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 15px;
 }
 
-.stat-label {
+.friend-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: #6b46c1;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.friend-name {
     font-weight: 500;
-    color: #666;
+    color: #333;
 }
 
-.stat-value {
+.leaderboard-table td:first-child {
     font-weight: 600;
     color: #6b46c1;
+}
+
+.leaderboard-table td:last-child {
+    font-weight: 600;
+    color: #6b46c1;
+}
+
+.add-friend-button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    background-color: #6b46c1;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.add-friend-button:hover {
+    background-color: #5a3ab0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.add-friend-popup {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 350px;
+    max-width: 90%;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    border: 1px solid #e0d6ff;
+}
+
+.add-friend-popup h3 {
+    margin-top: 0;
+    color: #6b46c1;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.add-friend-popup p {
+    margin-bottom: 25px;
+    color: #666;
+    font-size: 1rem;
+}
+
+.add-friend-popup input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 25px;
+    border: 1px solid #e0d6ff;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.add-friend-popup input:focus {
+    outline: none;
+    border-color: #6b46c1;
+    box-shadow: 0 0 0 2px rgba(107, 70, 193, 0.2);
+}
+
+.popup-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.popup-buttons button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s;
+    flex: 1;
 }
 
 @media (max-width: 768px) {
@@ -152,7 +278,45 @@ nav {
         justify-content: center;
     }
 
-    .stats-grid {
-        grid-template-columns: 1fr;
+    .chart-wrapper {
+        height: 300px;
+    }
+
+    .leaderboard-table {
+        min-width: 100%;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 10px 8px;
+    }
+
+    .add-friend-popup {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .streaks-content {
+        padding: 15px;
+    }
+
+    .friend-info {
+        gap: 8px;
+    }
+
+    .friend-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+    }
+
+    .popup-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .popup-buttons button {
+        width: 100%;
     }
 }
