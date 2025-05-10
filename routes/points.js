@@ -8,17 +8,17 @@ router.patch('/:userId/points', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `UPDATE users SET points = points + $1 WHERE user_id = $2 RETURNING points`,
+      `UPDATE profiles SET points = points + $1 WHERE user_id = $2 RETURNING points`,
       [delta, userId]
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User profile not found' });
     }
 
-    res.json({ newPoints: result.rows[0].points });
+    res.json({ points: result.rows[0].points });
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({ error: 'Failed to update user points' });
+    res.status(500).json({ error: 'Failed to update profile points' });
   }
 });
