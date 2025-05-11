@@ -55,7 +55,6 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
         updatedErrors.fill("");
 
         if (placeholders.length === 4) {
-            // Registration: First name, last name, email, password
             if (!firstName || !lastName) {
                 updatedErrors[0] = "Please enter your first and last name.";
                 valid = false;
@@ -70,7 +69,6 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
                 valid = false;
             }
         } else if (placeholders.length === 2) {
-            // Login: Only email and password
             const [email, password] = updatedInputs;
             if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
                 updatedErrors[0] = "Please enter a valid email.";
@@ -147,6 +145,10 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
 
             if (data?.token) {
                 localStorage.setItem("token", data.token);
+                const payloadBase64 = data.token.split('.')[1];
+                const decodedPayload = JSON.parse(atob(payloadBase64));
+                const userId = decodedPayload.id;
+                localStorage.setItem("userId", userId);
             }
 
             onClick();

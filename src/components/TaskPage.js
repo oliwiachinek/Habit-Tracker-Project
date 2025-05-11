@@ -163,10 +163,10 @@ export default function TaskPage() {
 
                     if (wasCompleted) {
                         updatedDays = taskItem.completedDays.filter(d => d !== day);
-                        setTotalPoints(prev => prev - parseInt(task.points));
+                        setTotalPoints(prev => prev - parseInt(task.points, 10));
                     } else {
                         updatedDays = [...taskItem.completedDays, day];
-                        setTotalPoints(prev => prev + parseInt(task.points));
+                        setTotalPoints(prev => prev + parseInt(task.points, 10));
                     }
 
                     return { ...taskItem, completedDays: updatedDays };
@@ -175,32 +175,38 @@ export default function TaskPage() {
             });
 
             setTasks({ ...tasks, [category]: updatedTasks });
-
             saveTasksToLocalStorage();
 
             const token = localStorage.getItem('token');
-            const formattedDate = new Date(day).toISOString().split('T')[0];
+            const userId = localStorage.getItem('userId');
 
-            if (!isChecked) {
-                console.warn('Unmarking not supported in backend yet.');
-            } else {
-                console.log(`Posting completion for Task ID: ${task._id} on ${formattedDate}`);
-                const res = await fetch(`http://localhost:5000/api/habits/${task._id}/entries`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ date: formattedDate }),
-                });
-
-                if (!res.ok) throw new Error('Failed to update task completion');
+            if (!userId || !token) {
+                throw new Error('User is not authenticated.');
             }
+
+            const delta = isChecked ? parseInt(task.points, 10) : -parseInt(task.points, 10);
+            const res = await fetch(`http://localhost:5000/api/users/${userId}/points`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ delta }),
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to update task completion in backend');
+            }
+
+            const response = await res.json();
+            console.log('Updated points from backend:', response.points);
         } catch (err) {
             console.error('Error updating task completion:', err);
             setMessage('Error updating task completion');
         }
     };
+
+
 
     const saveTasksToLocalStorage = () => {
         localStorage.setItem('tasks', JSON.stringify(tasks));
