@@ -23,7 +23,6 @@ router.get('/', authMiddleware, async (req, res) => {
     }
 });
 
-// DELETE /api/rewards/:id
 router.delete('/:id', authMiddleware, async (req, res) => {
     const rewardId = req.params.id;
     try {
@@ -35,7 +34,6 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// PUT /api/rewards/:id
 router.put('/:id', authMiddleware, async (req, res) => {
     const rewardId = req.params.id;
     const { title, pointsRequired } = req.body;

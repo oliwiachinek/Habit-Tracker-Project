@@ -78,4 +78,24 @@ const getUserProfile = async (userId) => {
   return result.rows[0];
 };
 
-module.exports = { registerUser, loginUser, updateUserPoints, updateProfile };
+const getUserPoints = async (userId) => {
+  const result = await pool.query(
+    'SELECT points FROM profiles WHERE user_id = $1',
+    [userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error('Profile not found');
+  }
+
+  return result.rows[0].points;
+};
+
+module.exports = { 
+  registerUser, 
+  loginUser, 
+  updateUserPoints, 
+  updateProfile,
+  getUserProfile,
+  getUserPoints 
+ };

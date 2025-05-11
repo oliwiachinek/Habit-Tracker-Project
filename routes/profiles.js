@@ -27,4 +27,13 @@ router.patch('/:userId/profile', async (req, res) => {
   }
 });
 
+router.get('/points', async (req, res) => {
+  try {
+    const points = await User.getUserPoints(req.user.id);
+    res.json({ points });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

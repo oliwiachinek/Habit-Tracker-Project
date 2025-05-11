@@ -31,14 +31,8 @@ router.post('/:id/entries', async (req, res) => {
     const { date } = req.body;
     const entryDate = date || new Date().toISOString().split('T')[0];  
 
-    const entry = await pool.query(
-      `INSERT INTO habit_completions (habit_id, user_id, date_completed)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (habit_id, user_id, date_completed) DO NOTHING`, 
-      [req.params.id, req.user.id, entryDate]
-    );
-
-    res.status(201).json(entry.rows[0]); 
+    const entry = await Habit.logEntry(req.params.id, req.user.id, entryDate);
+    res.status(201).json(entry || {}); 
   } catch (error) {
     console.error('Error logging habit completion:', error);
     res.status(400).json({ error: 'Failed to log habit completion' });
@@ -46,18 +40,11 @@ router.post('/:id/entries', async (req, res) => {
 });
 
 
-
-
 router.get('/:id/completed-today', async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const result = await pool.query(
-      `SELECT * FROM habit_completions
-       WHERE habit_id = $1 AND user_id = $2 AND date_completed = $3`,
-      [req.params.id, req.user.id, today]
-    );
-
-    res.json({ completed: result.rows.length > 0 });
+    const completed = await Habit.isCompletedToday(req.params.id, req.user.id, today);
+    res.json({ completed });
   } catch (error) {
     res.status(500).json({ error: 'Error checking completion status' });
   }
@@ -65,17 +52,12 @@ router.get('/:id/completed-today', async (req, res) => {
 
 router.get('/completions/all', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT * FROM habit_completions WHERE user_id = $1`,
-      [req.user.id]
-    );
-    res.json(result.rows);
+    const completions = await Habit.getAllCompletions(req.user.id);
+    res.json(completions);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch habit completions' });
   }
 });
-
-
 
 module.exports = router;
