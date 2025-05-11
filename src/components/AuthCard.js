@@ -93,6 +93,7 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
             if (placeholders.length === 4) {
                 const [firstName, lastName, email, password] = inputs;
 
+                console.log({ firstName, lastName, email, password });
                 res = await fetch("http://localhost:5000/api/auth/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -102,11 +103,7 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
                 data = await res.json();
 
                 if (!res.ok) {
-                    if (data.error && data.error.includes("users_email_key")) {
-                        throw new Error("Email connected to an existing account.");
-                    } else {
-                        throw new Error(data.message || "Registration failed");
-                    }
+                    throw new Error(data.error || data.message || "Registration failed");
                 }
 
                 res = await fetch("http://localhost:5000/api/auth/login", {
@@ -118,7 +115,7 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
                 data = await res.json();
 
                 if (!res.ok) {
-                    throw new Error(data.message || "Login failed");
+                    throw new Error(data.error || data.message || "Login failed");
                 }
 
             } else if (placeholders.length === 2) {
