@@ -16,6 +16,31 @@ const CalendarPage = () => {
     const days = Array.from({length: daysInMonth}, (_, i) => i + 1);
     const currentDay = currentDate.getDate();
 
+    useEffect(() => {
+        const fetchUserPoints = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch('http://localhost:5000/api/profile/points', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user points');
+                }
+
+                const data = await response.json();
+                setTotalPoints(data.points);
+            } catch (error) {
+                console.error('Error fetching user points', error);
+            }
+        };
+
+        fetchUserPoints();
+    }, []);
+
     const fetchTasksAndCompletions = async () => {
         try {
             const token = localStorage.getItem('token');

@@ -34,7 +34,7 @@ const RewardsPage = () => {
         image: ''
     });
     const [showAddForm, setShowAddForm] = useState(false);
-    const [points, setPoints] = useState(150); // This would come from your global state
+    const [points, setPoints] = useState(150);
 
     const handlePurchase = (rewardId) => {
         const reward = rewards.find(r => r.id === rewardId);
