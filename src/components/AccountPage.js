@@ -5,9 +5,9 @@ import "../styles/AccountPage.css";
 
 const AccountPage = () => {
     const [user, setUser] = useState({
-        name: '',
+        full_name: '',
         email: '',
-        joinDate: '',
+        join_date: '',
         avatar: ''
     });
     const [editing, setEditing] = useState(false);
@@ -17,7 +17,7 @@ const AccountPage = () => {
 
     useEffect(() => {
         const fetchUserData = async () => {
-            const response = await fetch('http://localhost:5000/api/user', {
+            const response = await fetch('http://localhost:5000/api/profile', {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 }
@@ -38,8 +38,8 @@ const AccountPage = () => {
 
     const handleSave = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/user', {
-                method: 'PUT',
+            const response = await fetch(`http://localhost:5000/api/${user.user_id}/profile`, {
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -85,7 +85,7 @@ const AccountPage = () => {
 
     const handleDeleteAccount = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/user', {
+            const response = await fetch('http://localhost:5000/api/profile', {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -94,9 +94,8 @@ const AccountPage = () => {
 
             if (response.ok) {
                 alert('Account deleted successfully');
-                // Log out and redirect user
                 localStorage.removeItem('token');
-                window.location.href = '/login';  // or use `useNavigate` from react-router-dom
+                window.location.href = '/login';
             } else {
                 throw new Error('Failed to delete account');
             }
@@ -153,8 +152,8 @@ const AccountPage = () => {
                         <div className="edit-fields">
                             <input
                                 type="text"
-                                name="name"
-                                value={tempUser.name}
+                                name="full_name"
+                                value={tempUser.full_name}
                                 onChange={handleChange}
                                 className="edit-input"
                             />
@@ -168,12 +167,12 @@ const AccountPage = () => {
                         </div>
                     ) : (
                         <>
-                            <h2>{user.name}</h2>
+                            <h2>{user.full_name}</h2>
                             <p className="user-email">{user.email}</p>
                         </>
                     )}
 
-                    <p className="join-date">{user.joinDate}</p>
+                    <p className="join-date">User since {user.join_date}</p>
 
                     <div className="edit-actions">
                         {editing ? (
