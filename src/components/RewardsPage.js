@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Link } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
 import "../styles/RewardsPage.css";
@@ -34,12 +34,37 @@ const RewardsPage = () => {
         image: ''
     });
     const [showAddForm, setShowAddForm] = useState(false);
-    const [points, setPoints] = useState(150);
+    const [totalPoints, setTotalPoints] = useState(150);
+
+    useEffect(() => {
+        const fetchUserPoints = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch('http://localhost:5000/api/profile/points', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user points');
+                }
+
+                const data = await response.json();
+                setTotalPoints(data.points);
+            } catch (error) {
+                console.error('Error fetching user points', error);
+            }
+        };
+
+        fetchUserPoints();
+    }, []);
 
     const handlePurchase = (rewardId) => {
         const reward = rewards.find(r => r.id === rewardId);
-        if (points >= reward.price) {
-            setPoints(points - reward.price);
+        if (totalPoints >= reward.price) {
+            setTotalPoints(totalPoints - reward.price);
             setRewards(rewards.map(r =>
                 r.id === rewardId ? {...r, purchased: true} : r
             ));
@@ -79,7 +104,7 @@ const RewardsPage = () => {
             <header>
                 <div className="header-left">
                     <h1>Rewards</h1>
-                    <div className="points-display">Your Points: {points}</div>
+                    <div className="points-display">Your Points: {totalPoints}</div>
                 </div>
                 <nav>
                     <Link to="/taskpage" className="nav-button">Tasks</Link>
@@ -149,7 +174,7 @@ const RewardsPage = () => {
                                 ) : (
                                     <button
                                         onClick={() => handlePurchase(reward.id)}
-                                        disabled={points < reward.price}
+                                        disabled={totalPoints < reward.price}
                                     >
                                         Purchase
                                     </button>
