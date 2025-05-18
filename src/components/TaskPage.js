@@ -17,6 +17,8 @@ const TaskBox = ({ title, tasks, onAddTask, onTaskComplete}) => {
                         <span className="points">{task.points}p</span>
                         <input
                             type="checkbox"
+                            checked={task.completedToday}
+                            disabled={task.completedToday}
                             onChange={(e) => onTaskComplete(task.habit_id, title, e.target.checked)}
                         />
                     </li>
@@ -80,6 +82,16 @@ export default function TaskPage() {
                 const data = await res.json();
                 console.log("📥 Raw tasks from backend:", data);
 
+                const compRes = await fetch('http://localhost:5000/api/habits/completions/today', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!compRes.ok) throw new Error('Failed to fetch today\'s completions');
+                const completedData = await compRes.json();
+                const completedTodayIds = completedData.completedToday;
+
 
                 const transformedTasks = {
                     "Daily Tasks": [],
@@ -101,6 +113,7 @@ export default function TaskPage() {
                         points: task.points,
                         habit_id: task.habit_id,
                         category: task.category,
+                        completedToday: completedTodayIds.includes(task.habit_id)
                     };
                     console.log(`📦 Categorizing task "${task.name}" with ID ${task.habit_id} and category "${task.category}"`);
 
