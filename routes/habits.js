@@ -60,4 +60,32 @@ router.get('/completions/all', async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  const habitId = parseInt(req.params.id);
+  const userId = req.user.id;
+
+  try {
+    const habit = await Habit.getByIdWithCompletions(habitId, userId);
+    if (!habit) {
+      return res.status(404).json({ message: 'Habit not found' });
+    }
+    res.json(habit);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/completions/today', async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const completedToday = await Habit.getTodayCompletions(req.user.id, today);
+    res.json({ completedToday });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch today\'s completions' });
+  }
+});
+
+
 module.exports = router;

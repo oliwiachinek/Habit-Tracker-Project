@@ -6,7 +6,7 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'http://localhost:3005',
   credentials: true
 }));
 app.use(express.json());
@@ -17,7 +17,9 @@ const specialTasksRoutes = require('./routes/specialTasks');
 const rewardRoutes = require('./routes/rewards');
 const streakRoutes = require('./routes/streaks');
 const profileRoutes = require('./routes/profiles');
+const friendRoutes = require('./routes/friends');
 
+app.use('/api/friends', friendRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/rewards', rewardRoutes);
