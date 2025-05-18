@@ -17,6 +17,61 @@
     padding: 20px;
 }
 
+.vertical-calendar {
+    display: flex;
+    align-items: flex-start;
+    overflow-x: auto;
+    background: white;
+    border: 1px solid #e0d6ff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.vertical-day-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+    border-right: 1px solid #e0d6ff;
+    background: white;
+}
+
+.vertical-day-column:last-child {
+    border-right: none;
+}
+
+.vertical-day-header {
+    padding: 10px;
+    background: #6b46c1;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid #e0d6ff;
+}
+
+.vertical-day-task {
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #333;
+}
+
+.vertical-day-task.completed {
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+.vertical-day-task input[type="checkbox"] {
+    margin-right: 8px;
+    accent-color: #6b46c1;
+}
+
+
+
+
 /* Header */
 header {
     display: flex;

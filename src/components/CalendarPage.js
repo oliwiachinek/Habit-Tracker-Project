@@ -22,14 +22,10 @@ const CalendarPage = () => {
                 const token = localStorage.getItem("token");
                 const response = await fetch('http://localhost:5000/api/profile/points', {
                     method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: {'Authorization': `Bearer ${token}`}
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch user points');
-                }
+                if (!response.ok) throw new Error('Failed to fetch user points');
 
                 const data = await response.json();
                 setTotalPoints(data.points);
@@ -41,77 +37,55 @@ const CalendarPage = () => {
         fetchUserPoints();
     }, []);
 
-    const fetchTasksAndCompletions = async () => {
-        try {
-            const token = localStorage.getItem('token');
+    useEffect(() => {
+        const fetchDailyHabitsWithCompletions = async () => {
+            const token = localStorage.getItem("token");
+            try {
+                const res = await fetch('http://localhost:5000/api/habits', {
+                    method: 'GET',
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                if (!res.ok) throw new Error('Failed to fetch habits');
+                const data = await res.json();
+                const dailyHabits = data.filter(habit => habit.category === 'daily');
 
-            const habitsRes = await fetch('http://localhost:5000/api/habits', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            const habitsData = await habitsRes.json();
+                const compRes = await fetch('http://localhost:5000/api/habits/completions/all', {
+                    method: 'GET',
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                if (!compRes.ok) throw new Error('Failed to fetch completions');
+                const completionsData = await compRes.json();
 
-            console.log('Fetched habits:', habitsData);
+                const completionsMap = {};
+                completionsData.forEach(c => {
+                    const date = new Date(c.date_completed).getDate(); // extract day only
+                    if (!completionsMap[c.habit_id]) completionsMap[c.habit_id] = new Set();
+                    completionsMap[c.habit_id].add(date);
+                });
 
-            const dailyTasks = habitsData.filter(task => task.schedule === 'daily');
+                const habitsWithCompletions = dailyHabits.map(habit => ({
+                    ...habit,
+                    completedDays: Array.from(completionsMap[habit.habit_id] || [])
+                }));
 
-            const completionsRes = await fetch('http://localhost:5000/api/habits/completions/all', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            const completionsData = await completionsRes.json();
+                setTasks(habitsWithCompletions);
+            } catch (err) {
+                console.error('Error fetching daily habits with completions:', err);
+            }
+        };
 
-            console.log('Fetched completions:', completionsData);
-
-            const tasksWithCompletedDays = dailyTasks.map(task => {
-                const completedDays = completionsData
-                    .filter(c => c.habit_id === task.id)
-                    .map(c => {
-                        const date = new Date(c.date_completed);
-                        return date.getDate();
-                    });
-
-                return {
-                    ...task,
-                    completedDays: completedDays
-                };
-            });
-
-            console.log('Tasks with completed days:', tasksWithCompletedDays);
-
-            setTasks(tasksWithCompletedDays);
-
-            let initialPoints = 0;
-            tasksWithCompletedDays.forEach(task => {
-                initialPoints += task.completedDays.length * task.points;
-            });
-            setTotalPoints(initialPoints);
-        } catch (error) {
-            console.error('Error fetching tasks or completions:', error);
-        }
-    };
-
+        fetchDailyHabitsWithCompletions();
+    }, []);
 
     const toggleTaskCompletion = async (taskId, day) => {
         try {
+            const token = localStorage.getItem('token');
             const updatedTasks = tasks.map(task => {
                 if (task.id === taskId) {
-                    const wasCompleted = task.completedDays.includes(day);
-                    let updatedDays;
-
-                    if (wasCompleted) {
-                        updatedDays = task.completedDays.filter(d => d !== day);
-                        setTotalPoints(prev => prev - task.points);
-                    } else {
-                        updatedDays = [...task.completedDays, day];
-                        setTotalPoints(prev => prev + task.points);
-                    }
-
-                    console.log(`Task ID: ${taskId}, Updated Completed Days:`, updatedDays);
+                    const alreadyCompleted = task.completedDays.includes(day);
+                    const updatedDays = alreadyCompleted
+                        ? task.completedDays
+                        : [...task.completedDays, day];
                     return {...task, completedDays: updatedDays};
                 }
                 return task;
@@ -119,13 +93,10 @@ const CalendarPage = () => {
 
             setTasks(updatedTasks);
 
-            const token = localStorage.getItem('token');
-            const date = new Date();
-            date.setDate(day);
+            const date = new Date(currentYear, currentDate.getMonth(), day);
             const formattedDate = date.toISOString().split('T')[0];
 
-            if (updatedTasks.find(t => t.id === taskId).completedDays.includes(day)) {
-                console.log(`Posting completion for Task ID: ${taskId} on ${formattedDate}`);
+            if (!tasks.find(t => t.id === taskId).completedDays.includes(day)) {
                 await fetch(`http://localhost:5000/api/habits/${taskId}/entries`, {
                     method: 'POST',
                     headers: {
@@ -134,40 +105,30 @@ const CalendarPage = () => {
                     },
                     body: JSON.stringify({date: formattedDate})
                 });
-            } else {
-                console.warn('Unmarking not supported in backend yet.');
+
+                const task = tasks.find(t => t.id === taskId);
+                setTotalPoints(prev => prev + task.points);
             }
         } catch (error) {
             console.error('Error updating completion:', error);
         }
     };
 
-
     const calculateTaskCompletion = (taskId) => {
         const task = tasks.find(t => t.id === taskId);
-        const completedCount = task.completedDays.length;
+        const completedCount = task?.completedDays?.length || 0;
         return Math.round((completedCount / daysInMonth) * 100);
-    };
-
-    const calculateOverallCompletion = () => {
-        const totalPossible = tasks.length * daysInMonth;
-        const totalCompleted = tasks.reduce((sum, task) => sum + task.completedDays.length, 0);
-        return Math.round((totalCompleted / totalPossible) * 100);
     };
 
     const handleAddTask = async () => {
         if (newTaskName.trim() && newTaskPoints) {
             try {
-                const schedule = {days: []};
-
                 const taskData = {
                     name: newTaskName,
                     category: 'daily',
                     points: parseInt(newTaskPoints),
-                    schedule
+                    schedule: {days: []}
                 };
-
-                console.log('New task data:', taskData);
 
                 const response = await fetch('http://localhost:5000/api/habits', {
                     method: 'POST',
@@ -180,26 +141,17 @@ const CalendarPage = () => {
 
                 const data = await response.json();
 
-                if (!response.ok) {
-                    console.error('Backend error message:', data.error);
-                    throw new Error('Failed to create habit');
-                }
-
-                console.log('Created task response:', data);
-
-                await fetchTasksAndCompletions();
+                if (!response.ok) throw new Error(data.error || 'Failed to create habit');
 
                 setNewTaskName('');
                 setNewTaskPoints('');
                 setShowAddTask(false);
-
             } catch (error) {
                 console.error('Error adding task:', error);
                 alert('There was a problem adding the task.');
             }
         }
     };
-
 
     return (
         <div className="task-container">
@@ -219,21 +171,7 @@ const CalendarPage = () => {
 
             <div className="calendar-wrapper">
                 <div className="sidebar">
-                    <div className="task-list">
-                        <h2>Tasks</h2>
-                        {tasks.map(task => (
-                            <div key={task.id} className="task-item">
-                                <div className="task-name">{task.name}</div>
-                                <div className="task-points">{task.points}p</div>
-                            </div>
-                        ))}
-                    </div>
-                    <button
-                        className="add-task-btn"
-                        onClick={() => setShowAddTask(true)}
-                    >
-                        + Add Task
-                    </button>
+                    <button className="add-task-btn" onClick={() => setShowAddTask(true)}>+ Add Task</button>
                     {showAddTask && (
                         <div className="add-task-form">
                             <input
@@ -260,10 +198,8 @@ const CalendarPage = () => {
                     <div className="calendar-row header-row">
                         <div className="task-cell header-cell">Task</div>
                         {days.map(day => (
-                            <div
-                                key={day}
-                                className={`day-cell header-cell ${day === currentDay ? 'current-day' : ''}`}
-                            >
+                            <div key={day}
+                                 className={`day-cell header-cell ${day === currentDay ? 'current-day' : ''}`}>
                                 {day}
                             </div>
                         ))}
@@ -279,15 +215,13 @@ const CalendarPage = () => {
                             {days.map(day => (
                                 <div
                                     key={day}
-                                    className={`day-cell ${task.completedDays.includes(day) ? 'completed' : ''}`}
-                                    onClick={() => toggleTaskCompletion(task.id, day)}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={task.completedDays.includes(day)}
-                                        onChange={() => toggleTaskCompletion(task.id, day)}
-                                    />
-                                </div>
+                                    className={`day-cell calendar-box ${task.completedDays.includes(day) ? 'completed' : ''}`}
+                                    onClick={() => {
+                                        if (!task.completedDays.includes(day)) {
+                                            toggleTaskCompletion(task.id, day);
+                                        }
+                                    }}
+                                ></div>
                             ))}
                             <div className="completion-cell">
                                 {calculateTaskCompletion(task.id)}%
@@ -298,5 +232,6 @@ const CalendarPage = () => {
             </div>
         </div>
     );
-}
+};
+
 export default CalendarPage;
