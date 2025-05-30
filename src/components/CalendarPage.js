@@ -65,6 +65,7 @@ const CalendarPage = () => {
 
                 const habitsWithCompletions = dailyHabits.map(habit => ({
                     ...habit,
+                    id: habit.habit_id,
                     completedDays: Array.from(completionsMap[habit.habit_id] || [])
                 }));
 
@@ -198,7 +199,8 @@ const CalendarPage = () => {
                     <div className="calendar-row header-row">
                         <div className="task-cell header-cell">Task</div>
                         {days.map(day => (
-                            <div key={day}
+                            <div
+                                 key={`header-${day}`}
                                  className={`day-cell header-cell ${day === currentDay ? 'current-day' : ''}`}>
                                 {day}
                             </div>
@@ -214,14 +216,14 @@ const CalendarPage = () => {
                             </div>
                             {days.map(day => (
                                 <div
-                                    key={day}
+                                    key={`${task.id}-${day}`}
                                     className={`day-cell calendar-box ${task.completedDays.includes(day) ? 'completed' : ''}`}
                                     onClick={() => {
                                         if (!task.completedDays.includes(day)) {
                                             toggleTaskCompletion(task.id, day);
                                         }
                                     }}
-                                ></div>
+                                >{task.completedDays.includes(day) ? '✔️' : ''}</div>
                             ))}
                             <div className="completion-cell">
                                 {calculateTaskCompletion(task.id)}%

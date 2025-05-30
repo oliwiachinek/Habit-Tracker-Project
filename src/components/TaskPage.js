@@ -11,14 +11,28 @@ const TaskBox = ({ title, tasks, onAddTask, onTaskComplete}) => {
                 {tasks.map((task, index) => (
                     <li key={index}>
                         {task.special && <span className="crown-icon">👑</span>}
-                        <span className={task.special ? "special-task" : ""}>
-                        {task.name}
-                    </span>
+                        <span className={task.special ? "special-task" : ""}>{task.name}</span>
                         <span className="points">{task.points}p</span>
                         <input
                             type="checkbox"
-                            checked={task.completedToday}
-                            disabled={task.completedToday}
+                            checked={
+                                task.category === 'daily'
+                                    ? task.completedToday
+                                    : task.category === 'weekly'
+                                        ? task.completedThisWeek
+                                        : task.category === 'monthly'
+                                            ? task.completedThisMonth
+                                            : task.completedThisYear
+                            }
+                            disabled={
+                                task.category === 'daily'
+                                    ? task.completedToday
+                                    : task.category === 'weekly'
+                                        ? task.completedThisWeek
+                                        : task.category === 'monthly'
+                                            ? task.completedThisMonth
+                                            : task.completedThisYear
+                            }
                             onChange={(e) => onTaskComplete(task.habit_id, title, e.target.checked)}
                         />
                     </li>
@@ -26,6 +40,8 @@ const TaskBox = ({ title, tasks, onAddTask, onTaskComplete}) => {
             </ul>
         </div>
     );
+
+
 
 };
 
@@ -37,29 +53,30 @@ const specialMonthlyTasks = [
 export default function TaskPage() {
     const [date, setDate] = useState(new Date().toLocaleDateString());
     const [showPopup, setShowPopup] = useState(false);
-    const [taskTitle, setTaskTitle] = useState("");
-    const [taskPoints, setTaskPoints] = useState("");
+    const [taskTitle, setTaskTitle] = useState('');
+    const [taskPoints, setTaskPoints] = useState('');
     const [tasks, setTasks] = useState({
         "Daily Tasks": [],
         "Weekly Tasks": [],
         "Monthly Tasks": [
             {
-                name: specialMonthlyTasks[new Date().getMonth() %
-                specialMonthlyTasks.length],
+                name: specialMonthlyTasks[new Date().getMonth() % specialMonthlyTasks.length],
                 points: "50",
-                special: true
+                special: true,
+                completedToday: false,
+                habit_id: null
             }
         ],
         "Yearly Tasks": []
     });
-    const [currentCategory, setCurrentCategory] = useState("");
+    const [currentCategory, setCurrentCategory] = useState('');
     const [selectedDays, setSelectedDays] = useState([]);
     const [selectedWeeks, setSelectedWeeks] = useState([]);
     const [selectedMonths, setSelectedMonths] = useState([]);
     const [selectedYears, setSelectedYears] = useState([]);
-    const [newWeek, setNewWeek] = useState("");
-    const [newMonth, setNewMonth] = useState("");
-    const [newYear, setNewYear] = useState("");
+    const [newWeek, setNewWeek] = useState('');
+    const [newMonth, setNewMonth] = useState('');
+    const [newYear, setNewYear] = useState('');
     const [isOneTimeTask, setIsOneTimeTask] = useState(false);
     const [totalPoints, setTotalPoints] = useState(0);
     const [message, setMessage] = useState('');
@@ -80,18 +97,43 @@ export default function TaskPage() {
                 });
                 if (!res.ok) throw new Error('Failed to fetch tasks');
                 const data = await res.json();
-                console.log("📥 Raw tasks from backend:", data);
+                console.log("Raw tasks from backend:", data);
 
-                const compRes = await fetch('http://localhost:5000/api/habits/completions/today', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (!compRes.ok) throw new Error('Failed to fetch today\'s completions');
-                const completedData = await compRes.json();
-                const completedTodayIds = completedData.completedToday;
+                const [
+                    todayRes,
+                    weekRes,
+                    monthRes,
+                    yearRes
+                ] = await Promise.all([
+                    fetch('http://localhost:5000/api/habits/completions/today', {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch('http://localhost:5000/api/habits/completions/week', {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch('http://localhost:5000/api/habits/completions/month', {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch('http://localhost:5000/api/habits/completions/year', {
+                        method: 'GET',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    })
+                ]);
+                if (!todayRes.ok || !weekRes.ok || !monthRes.ok || !yearRes.ok) {
+                    throw new Error('Failed to fetch completions');
+                }
+                const todayData = await todayRes.json();
+                const weekData = await weekRes.json();
+                const monthData = await monthRes.json();
+                const yearData = await yearRes.json();
 
+                const completedTodayIds = todayData.completedToday || [];
+                const completedThisWeekIds = weekData.map(item => item.habit_id);
+                const completedThisMonthIds = monthData.map(item => item.habit_id);
+                const completedThisYearIds = yearData.map(item => item.habit_id);
 
                 const transformedTasks = {
                     "Daily Tasks": [],
@@ -113,9 +155,11 @@ export default function TaskPage() {
                         points: task.points,
                         habit_id: task.habit_id,
                         category: task.category,
-                        completedToday: completedTodayIds.includes(task.habit_id)
-                    };
-                    console.log(`📦 Categorizing task "${task.name}" with ID ${task.habit_id} and category "${task.category}"`);
+                        completedToday: completedTodayIds.includes(task.habit_id),
+                        completedThisWeek: completedThisWeekIds.includes(task.habit_id),
+                        completedThisMonth: completedThisMonthIds.includes(task.habit_id),
+                        completedThisYear: completedThisYearIds.includes(task.habit_id)                    };
+                    console.log(`Categorizing task "${task.name}" with ID ${task.habit_id} and category "${task.category}"`);
 
                     if (task.category === 'daily') {
                         transformedTasks["Daily Tasks"].push(taskObj);
@@ -127,7 +171,7 @@ export default function TaskPage() {
                         transformedTasks["Yearly Tasks"].push(taskObj);
                     }
                 });
-                console.log("✅ Transformed task structure:", transformedTasks);
+                console.log("Transformed task structure:", transformedTasks);
 
                 setTasks(transformedTasks);
             } catch (err) {
@@ -184,10 +228,10 @@ export default function TaskPage() {
     const handleTaskComplete = async (habitId, category) => {
         const token = localStorage.getItem("token");
 
-        console.log("🆔 Habit ID used:", habitId);
+        console.log("Habit ID used:", habitId);
 
         const today = new Date().toISOString().split('T')[0];
-        console.log("📅 Logging for date:", today);
+        console.log("Logging for date:", today);
 
         try {
             const res = await fetch(`http://localhost:5000/api/habits/${habitId}/entries`, {
@@ -199,7 +243,7 @@ export default function TaskPage() {
                 body: JSON.stringify({ date: today }),
             });
 
-            console.log("📡 Backend response status:", res.status);
+            console.log("Backend response status:", res.status);
 
             if (!res.ok) throw new Error("Failed to log completion to backend");
 
@@ -222,9 +266,9 @@ export default function TaskPage() {
                 };
             });
 
-            setMessage(`✅ Completed task with ID: ${habitId}`);
+            setMessage(`Completed task :D !!`);
         } catch (err) {
-            console.error("🔥 Error updating task completion:", err);
+            console.error("Error updating task completion:", err);
             setMessage("Error completing task");
         }
     };
@@ -326,7 +370,7 @@ export default function TaskPage() {
 
             if (!res.ok) throw new Error('Failed to create task');
             const data = await res.json();
-            console.log("🚀 Created task data:", data);
+            console.log("Created task data:", data);
 
 
             const updatedTasks = {

@@ -24,6 +24,14 @@ const AccountPage = () => {
             });
             if (response.ok) {
                 const data = await response.json();
+                if (data.join_date) {
+                    const formattedDate = new Date(data.join_date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    data.join_date = formattedDate;
+                }
                 setUser(data);
                 setTempUser(data);
             }
@@ -172,7 +180,7 @@ const AccountPage = () => {
                         </>
                     )}
 
-                    <p className="join-date">User since {user.join_date}</p>
+                    <p className="join-date">Member since {user.join_date}</p>
 
                     <div className="edit-actions">
                         {editing ? (

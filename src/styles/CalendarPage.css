@@ -234,7 +234,6 @@ nav button.active, nav button:hover, .nav-button:hover {
     background: #d32f2f;
 }
 
-/* Calendar Table */
 .calendar-table {
     display: inline-block;
     border: 1px solid #e0d6ff;
@@ -316,7 +315,6 @@ nav button.active, nav button:hover, .nav-button:hover {
 }
 
 .day-cell.completed {
-    background: #e8f5e9;
     color: #2e7d32;
     font-weight: bold;
 }
