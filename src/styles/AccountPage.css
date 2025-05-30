@@ -239,13 +239,13 @@ nav {
     font-weight: 600;
     transition: all 0.2s;
     width: 100%;
-    background: #4CAF50;
+    background: #6b46c1;
     color: white;
     position: relative;
 }
 
 .friend-request-btn:hover {
-    background: #3d8b40;
+    background: #6b46c1;
 }
 
 .request-count {
@@ -319,13 +319,11 @@ nav {
     border-radius: 10px;
     max-width: 400px;
     width: 90%;
-    text-align: center;
 }
 
 .friend-request-modal .modal-content {
     max-height: 80vh;
     overflow-y: auto;
-    text-align: left;
 }
 
 .modal-header {
@@ -337,7 +335,7 @@ nav {
 
 .modal-header h3 {
     margin: 0;
-    color: #333;
+    color: #6b46c1;
 }
 
 .close-modal-btn {
@@ -369,7 +367,7 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
+    padding: 12px 0;
     border-bottom: 1px solid #eee;
 }
 
@@ -385,7 +383,7 @@ nav {
 
 .request-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
 }
 
 .accept-btn, .reject-btn {
