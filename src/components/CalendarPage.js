@@ -200,8 +200,8 @@ const CalendarPage = () => {
                         <div className="task-cell header-cell">Task</div>
                         {days.map(day => (
                             <div
-                                 key={`header-${day}`}
-                                 className={`day-cell header-cell ${day === currentDay ? 'current-day' : ''}`}>
+                                key={`header-${day}`}
+                                className={`day-cell header-cell ${day === currentDay ? 'current-day' : ''}`}>
                                 {day}
                             </div>
                         ))}
