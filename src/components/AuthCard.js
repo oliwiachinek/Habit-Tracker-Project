@@ -14,8 +14,8 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
     const [isPasswordTyping, setIsPasswordTyping] = useState(false);
 
     useEffect(() => {
-        setIsSubmitDisabled(!validateInputs(inputs));
-    }, [inputs]);
+        setIsSubmitDisabled(!validateInputs(inputs) || (placeholders.length === 4 && !isPasswordValid()));
+    }, [inputs, passwordValidations]);
 
     const handleChange = (index, value) => {
         const updatedInputs = [...inputs];
@@ -42,6 +42,11 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
         });
     };
 
+    const isPasswordValid = () => {
+        const { minLength, hasNumbersAndLetters, hasSpecialChar } = passwordValidations;
+        return minLength && hasNumbersAndLetters && hasSpecialChar;
+    };
+
     const validateInputs = (updatedInputs) => {
         let valid = true;
         const updatedErrors = [...errors];
@@ -58,6 +63,9 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
                 valid = false;
             } else if (!password) {
                 updatedErrors[3] = "Please enter a password.";
+                valid = false;
+            } else if (!isPasswordValid()) {
+                updatedErrors[3] = "Password does not meet the required criteria.";
                 valid = false;
             }
         } else if (placeholders.length === 2) {
@@ -85,6 +93,7 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
             if (placeholders.length === 4) {
                 const [firstName, lastName, email, password] = inputs;
 
+                console.log({ firstName, lastName, email, password });
                 res = await fetch("http://localhost:5000/api/auth/register", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -94,12 +103,7 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
                 data = await res.json();
 
                 if (!res.ok) {
-                    // If the registration failed, show the error message
-                    if (data.error && data.error.includes("users_email_key")) {
-                        throw new Error("Email connected to an existing account.");
-                    } else {
-                        throw new Error(data.message || "Registration failed");
-                    }
+                    throw new Error(data.error || data.message || "Registration failed");
                 }
 
                 res = await fetch("http://localhost:5000/api/auth/login", {
@@ -111,7 +115,7 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
                 data = await res.json();
 
                 if (!res.ok) {
-                    throw new Error(data.message || "Login failed");
+                    throw new Error(data.error || data.message || "Login failed");
                 }
 
             } else if (placeholders.length === 2) {
@@ -138,6 +142,10 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
 
             if (data?.token) {
                 localStorage.setItem("token", data.token);
+                const payloadBase64 = data.token.split('.')[1];
+                const decodedPayload = JSON.parse(atob(payloadBase64));
+                const userId = decodedPayload.id;
+                localStorage.setItem("userId", userId);
             }
 
             onClick();
@@ -146,8 +154,6 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
             setErrors([err.message]);
         }
     };
-
-
 
     return (
         <div
@@ -177,7 +183,7 @@ const AuthCard = ({ title, bgColor, placeholders, buttonText, onClick }) => {
                 <div className="password-requirements">
                     <ul>
                         <li className={passwordValidations.minLength ? "valid" : "invalid"}>
-                            At least 6 characters
+                            Must be at least 6 characters
                         </li>
                         <li className={passwordValidations.hasNumbersAndLetters ? "valid" : "invalid"}>
                             Must include numbers and letters

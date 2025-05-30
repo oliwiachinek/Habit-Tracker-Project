@@ -50,8 +50,7 @@ const CalendarPage = () => {
         return Math.round((completedCount / daysInMonth) * 100);
     };
 
-
-    const handleAddTask = () => {
+    const handleAddTask = async () => {
         if (newTaskName.trim() && newTaskPoints) {
             const newTask = {
                 id: tasks.length + 1,
@@ -83,15 +82,8 @@ const CalendarPage = () => {
             </header>
 
             <div className="calendar-wrapper">
-                <div className="calendar-header">
-                    <div className="completion-info">
-                        <button
-                            className="add-task-btn"
-                            onClick={() => setShowAddTask(true)}
-                        >
-                            + Add Task
-                        </button>
-                    </div>
+                <div className="sidebar">
+                    <button className="add-task-btn" onClick={() => setShowAddTask(true)}>+ Add Task</button>
                     {showAddTask && (
                         <div className="add-task-form">
                             <input

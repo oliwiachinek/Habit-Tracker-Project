@@ -1,37 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/TaskPage.css';
 import { Link } from 'react-router-dom';
-const TaskBox = ({ title, tasks, onAddTask, onTaskComplete }) => {
+
+const TaskBox = ({ title, tasks, onAddTask, onTaskComplete}) => {
     return (
         <div className="task-box">
             <h2>{title}</h2>
-            <button className="add-btn" onClick={() => onAddTask(title)}>+</
-                button>
+            <button className="add-btn" onClick={() => onAddTask(title)}>+</button>
             <ul>
                 {tasks.map((task, index) => (
                     <li key={index}>
-                        {task.special && <span className="crown-icon">
-�
-</span>}
+                        {task.special && <span className="crown-icon">👑</span>}
                         <span className={task.special ? "special-task" : ""}>
- {task.name}
- </span>
+                        {task.name}
+                    </span>
                         <span className="points">{task.points}p</span>
                         <input
                             type="checkbox"
-                            onChange={(e) => onTaskComplete(title, index,
-                                e.target.checked)}
+                            checked={task.completedToday}
+                            disabled={task.completedToday}
+                            onChange={(e) => onTaskComplete(task.habit_id, title, e.target.checked)}
                         />
                     </li>
                 ))}
             </ul>
         </div>
     );
+
 };
+
 const specialMonthlyTasks = [
     "Go for a 2-hour walk in nature",
     "Make a handmade present for a friend"
 ];
+
 export default function TaskPage() {
     const [date, setDate] = useState(new Date().toLocaleDateString());
     const [showPopup, setShowPopup] = useState(false);
@@ -65,8 +67,8 @@ export default function TaskPage() {
     const allMonths = Array.from({ length: 12 }, (_, i) =>
         new Date(0, i).toLocaleString('en-US', { month: 'long' })
     );
+
     useEffect(() => {
-        // Fetch tasks from backend when component mounts
         const fetchTasks = async () => {
             const token = localStorage.getItem("token");
             try {
@@ -78,16 +80,29 @@ export default function TaskPage() {
                 });
                 if (!res.ok) throw new Error('Failed to fetch tasks');
                 const data = await res.json();
-                // Transform backend data to match frontend structure
+                console.log("📥 Raw tasks from backend:", data);
+
+                const compRes = await fetch('http://localhost:5000/api/habits/completions/today', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!compRes.ok) throw new Error('Failed to fetch today\'s completions');
+                const completedData = await compRes.json();
+                const completedTodayIds = completedData.completedToday;
+
+
                 const transformedTasks = {
                     "Daily Tasks": [],
                     "Weekly Tasks": [],
                     "Monthly Tasks": [
                         {
-                            name: specialMonthlyTasks[new Date().getMonth() %
-                            specialMonthlyTasks.length],
+                            name: specialMonthlyTasks[new Date().getMonth() % specialMonthlyTasks.length],
                             points: "50",
-                            special: true
+                            special: true,
+                            completedToday: false,
+                            habit_id: null,
                         }
                     ],
                     "Yearly Tasks": []
@@ -96,8 +111,12 @@ export default function TaskPage() {
                     const taskObj = {
                         name: task.name,
                         points: task.points,
-                        _id: task._id
+                        habit_id: task.habit_id,
+                        category: task.category,
+                        completedToday: completedTodayIds.includes(task.habit_id)
                     };
+                    console.log(`📦 Categorizing task "${task.name}" with ID ${task.habit_id} and category "${task.category}"`);
+
                     if (task.category === 'daily') {
                         transformedTasks["Daily Tasks"].push(taskObj);
                     } else if (task.category === 'weekly') {
@@ -108,6 +127,8 @@ export default function TaskPage() {
                         transformedTasks["Yearly Tasks"].push(taskObj);
                     }
                 });
+                console.log("✅ Transformed task structure:", transformedTasks);
+
                 setTasks(transformedTasks);
             } catch (err) {
                 console.error('Error fetching tasks:', err);
@@ -126,39 +147,88 @@ export default function TaskPage() {
         setIsOneTimeTask(false);
         setShowPopup(true);
     };
-    const handleTaskComplete = async (category, index, isChecked) => {
-        const task = tasks[category][index];
 
-        if (!task._id) {
-            if (isChecked) {
-                setTotalPoints(prev => prev + parseInt(task.points));
-            } else {
-                setTotalPoints(prev => prev - parseInt(task.points));
-            }
-            return;
-        }
-
-        const token = localStorage.getItem("token");
-
-        try {
-            if (isChecked) {
-                const res = await fetch(`http://localhost:5000/api/streaks/complete/${task._id}`, {
-                    method: 'POST',
+    useEffect(() => {
+        const fetchUserPoints = async () => {
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch('http://localhost:5000/api/profile/points', {
+                    method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
 
-                if (!res.ok) throw new Error('Failed to update task completion');
-                setTotalPoints(prev => prev + parseInt(task.points));
-            } else {
-                setTotalPoints(prev => prev - parseInt(task.points));
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user points');
+                }
+
+                const data = await response.json();
+                setTotalPoints(data.points);
+            } catch (error) {
+                console.error('Error fetching user points', error);
             }
+        };
+
+        fetchUserPoints();
+    }, []);
+
+    useEffect(() => {
+        const savedTasks = localStorage.getItem('tasks');
+
+        if (savedTasks) {
+            setTasks(JSON.parse(savedTasks));
+        }
+    }, []);
+
+    const handleTaskComplete = async (habitId, category) => {
+        const token = localStorage.getItem("token");
+
+        console.log("🆔 Habit ID used:", habitId);
+
+        const today = new Date().toISOString().split('T')[0];
+        console.log("📅 Logging for date:", today);
+
+        try {
+            const res = await fetch(`http://localhost:5000/api/habits/${habitId}/entries`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ date: today }),
+            });
+
+            console.log("📡 Backend response status:", res.status);
+
+            if (!res.ok) throw new Error("Failed to log completion to backend");
+
+            setTasks((prevTasks) => {
+                const updatedCategoryTasks = prevTasks[category].map(task => {
+                    if (task.habitId === habitId) {
+                        return {
+                            ...task,
+                            completedDays: task.completedDays.includes(today)
+                                ? task.completedDays
+                                : [...task.completedDays, today],
+                        };
+                    }
+                    return task;
+                });
+
+                return {
+                    ...prevTasks,
+                    [category]: updatedCategoryTasks,
+                };
+            });
+
+            setMessage(`✅ Completed task with ID: ${habitId}`);
         } catch (err) {
-            console.error('Error updating task completion:', err);
-            setMessage('Error updating task completion');
+            console.error("🔥 Error updating task completion:", err);
+            setMessage("Error completing task");
         }
     };
+
 
     const toggleAllDays = () => {
         if (selectedDays.length === allDays.length) {
@@ -174,18 +244,22 @@ export default function TaskPage() {
             setSelectedMonths([...allMonths]);
         }
     };
+
     const handleSaveTask = async () => {
         if (!taskTitle || !taskPoints) {
             alert("Please fill in task name and points.");
             return;
         }
+
         let category = '';
         if (currentCategory === "Daily Tasks") category = 'daily';
         else if (currentCategory === "Weekly Tasks") category = 'weekly';
         else if (currentCategory === "Monthly Tasks") category = 'monthly';
         else if (currentCategory === "Yearly Tasks") category = 'yearly';
+
         let schedule = {};
         let isValid = true;
+
         if (isOneTimeTask) {
             schedule.isOneTime = true;
         } else {
@@ -227,15 +301,19 @@ export default function TaskPage() {
                     break;
             }
         }
+
         if (!isValid) return;
+
         const newTask = {
             name: taskTitle,
             points: parseInt(taskPoints),
             category,
-            isOneTime: isOneTimeTask,
+            one_time: isOneTimeTask,
             schedule
         };
+
         const token = localStorage.getItem("token");
+
         try {
             const res = await fetch('http://localhost:5000/api/habits', {
                 method: 'POST',
@@ -245,16 +323,24 @@ export default function TaskPage() {
                 },
                 body: JSON.stringify(newTask),
             });
+
             if (!res.ok) throw new Error('Failed to create task');
             const data = await res.json();
-            // Update frontend state with the new task
-            const updatedTasks = { ...tasks };
-            updatedTasks[currentCategory].push({
+            console.log("🚀 Created task data:", data);
+
+
+            const updatedTasks = {
+                habitId: data.habitId,
                 name: data.name,
                 points: data.points,
-                _id: data._id
-            });
-            setTasks(updatedTasks);
+                completedDays: []
+            };
+
+            setTasks((prev) => ({
+                ...prev,
+                [currentCategory]: [...prev[currentCategory], updatedTasks],
+            }));
+
             setMessage(`Task created: ${data.name}`);
             setShowPopup(false);
             setTaskTitle("");
@@ -264,6 +350,9 @@ export default function TaskPage() {
             setMessage('Error creating task');
         }
     };
+
+
+
     const addWeek = () => {
         if (newWeek && !selectedWeeks.includes(newWeek)) {
             setSelectedWeeks([...selectedWeeks, newWeek]);
@@ -300,12 +389,13 @@ export default function TaskPage() {
     const removeItem = (list, setList, item) => {
         setList(list.filter(i => i !== item));
     };
+
     return (
         <div className="task-container">
             <header>
                 <div className="header-left">
                     <h1>{date}</h1>
-                    <div className="points-display">Total Points: {totalPoints}</div>
+                    <div className="points-display">Total Points: {totalPoints} </div>
                 </div>
                 <nav>
                     <button className="active">Tasks</button>
@@ -324,6 +414,7 @@ export default function TaskPage() {
                         tasks={tasks[category]}
                         onAddTask={handleAddTask}
                         onTaskComplete={handleTaskComplete}
+                        category={category}
                     />
                 ))}
             </div>
