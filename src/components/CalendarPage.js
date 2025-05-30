@@ -50,11 +50,6 @@ const CalendarPage = () => {
         return Math.round((completedCount / daysInMonth) * 100);
     };
 
-    const calculateOverallCompletion = () => {
-        const totalPossible = tasks.length * daysInMonth;
-        const totalCompleted = tasks.reduce((sum, task) => sum + task.completedDays.length, 0);
-        return Math.round((totalCompleted / totalPossible) * 100);
-    };
 
     const handleAddTask = () => {
         if (newTaskName.trim() && newTaskPoints) {
@@ -90,9 +85,6 @@ const CalendarPage = () => {
             <div className="calendar-wrapper">
                 <div className="calendar-header">
                     <div className="completion-info">
-                        <div className="overall-completion">
-                            Overall Completion: {calculateOverallCompletion()}%
-                        </div>
                         <button
                             className="add-task-btn"
                             onClick={() => setShowAddTask(true)}

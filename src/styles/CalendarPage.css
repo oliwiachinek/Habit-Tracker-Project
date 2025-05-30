@@ -1,4 +1,4 @@
-/* Global Reset */
+
 * {
     margin: 0;
     padding: 0;
@@ -6,7 +6,6 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Background */
 .task-container {
     display: flex;
     flex-direction: column;
@@ -17,7 +16,6 @@
     padding: 20px;
 }
 
-/* Header */
 header {
     display: flex;
     justify-content: space-between;
@@ -78,7 +76,6 @@ nav button.active, nav button:hover, .nav-button:hover {
     color: white;
 }
 
-/* Calendar Wrapper */
 .calendar-wrapper {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 10px;
@@ -100,15 +97,6 @@ nav button.active, nav button:hover, .nav-button:hover {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-}
-
-.overall-completion {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #6b46c1;
-    background: #f0e6ff;
-    padding: 8px 15px;
-    border-radius: 20px;
 }
 
 .add-task-btn {

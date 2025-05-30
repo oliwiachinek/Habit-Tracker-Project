@@ -1,4 +1,3 @@
-/* Base Container */
 .simple-account-container {
     display: flex;
     flex-direction: column;
@@ -9,7 +8,6 @@
     padding: 20px;
 }
 
-/* Header Styles */
 header {
     display: flex;
     justify-content: space-between;
@@ -62,7 +60,6 @@ nav {
     color: white;
 }
 
-/* Main Content Area */
 .simple-account-content {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 10px;
@@ -74,7 +71,6 @@ nav {
     align-items: center;
 }
 
-/* Profile Section */
 .user-profile {
     text-align: center;
     margin-bottom: 30px;
@@ -82,7 +78,6 @@ nav {
     max-width: 400px;
 }
 
-/* Avatar Styles */
 .avatar-container {
     position: relative;
     width: 150px;
@@ -132,7 +127,6 @@ nav {
     font-size: 1.2rem;
 }
 
-/* User Info Text */
 .user-profile h2 {
     margin: 0 0 5px 0;
     color: #333;
@@ -150,7 +144,6 @@ nav {
     font-size: 0.9rem;
 }
 
-/* Edit Fields */
 .edit-fields {
     display: flex;
     flex-direction: column;
@@ -179,7 +172,6 @@ nav {
     text-align: center;
 }
 
-/* Action Buttons */
 .edit-actions {
     display: flex;
     gap: 10px;
@@ -226,7 +218,6 @@ nav {
     background: #d32f2f;
 }
 
-/* Account Actions */
 .account-actions {
     display: flex;
     flex-direction: column;
@@ -273,7 +264,6 @@ nav {
     font-size: 1.2rem;
 }
 
-/* Delete Confirmation Modal */
 .delete-confirm-modal {
     position: fixed;
     top: 0;
@@ -338,7 +328,6 @@ nav {
     background: #bdbdbd;
 }
 
-/* Responsive Adjustments */
 @media (max-width: 768px) {
     header {
         flex-direction: column;
@@ -378,7 +367,155 @@ nav {
     }
 }
 
-/* Hidden File Input */
 input[type="file"] {
     display: none;
+}
+
+.friend-request-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    width: 100%;
+    background: #6b46c1;;
+    color: white;
+    position: relative;
+}
+
+.friend-request-btn:hover {
+    background: #553c9a;
+}
+
+.request-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #f44336;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+}
+
+.friend-request-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.friend-request-modal .modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    max-width: 400px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    font-size: 1.2rem;
+    transition: color 0.2s;
+}
+
+.close-modal-btn:hover {
+    color: #333;
+}
+
+.no-requests {
+    text-align: center;
+    color: #666;
+    margin: 20px 0;
+}
+
+.request-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.request-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-icon {
+    color: #6b46c1;
+}
+
+.request-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.accept-btn, .reject-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.accept-btn {
+    background: #4CAF50;
+    color: white;
+}
+
+.accept-btn:hover {
+    background: #3d8b40;
+}
+
+.reject-btn {
+    background: #f44336;
+    color: white;
+}
+
+.reject-btn:hover {
+    background: #d32f2f;
 }
