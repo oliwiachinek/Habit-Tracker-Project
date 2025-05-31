@@ -93,6 +93,3 @@ ALTER TABLE profiles
     ADD COLUMN avatar TEXT,
     ADD COLUMN join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
-
-
-select * from habits;

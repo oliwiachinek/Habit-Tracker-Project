@@ -87,5 +87,36 @@ router.get('/completions/today', async (req, res) => {
   }
 });
 
+router.get('/completions/week', async (req, res) => {
+  try {
+    const completionsThisWeek = await Habit.getCompletionsThisWeek(req.user.id);
+    res.json(completionsThisWeek);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch completions for this week' });
+  }
+});
+
+router.get('/completions/month', async (req, res) => {
+  try {
+    const completionsThisMonth = await Habit.getCompletionsThisMonth(req.user.id);
+    res.json(completionsThisMonth);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch completions for this month' });
+  }
+});
+
+router.get('/completions/year', async (req, res) => {
+  try {
+    const completionsThisYear = await Habit.getCompletionsThisYear(req.user.id);
+    res.json(completionsThisYear);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch completions for this year' });
+  }
+});
+
+
 
 module.exports = router;

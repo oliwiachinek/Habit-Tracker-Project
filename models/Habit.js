@@ -110,8 +110,34 @@ async getTodayCompletions(userId, date) {
     [userId, date]
   );
   return result.rows.map(r => r.habit_id);
-}
+},
 
+  async getCompletionsThisWeek(userId) {
+    const result = await pool.query(
+      `SELECT * FROM habit_completions
+       WHERE user_id = $1 AND date_completed >= date_trunc('week', CURRENT_DATE)`,
+      [userId]
+    );
+    return result.rows;
+  },
+
+  async getCompletionsThisMonth(userId) {
+    const result = await pool.query(
+      `SELECT * FROM habit_completions
+       WHERE user_id = $1 AND date_completed >= date_trunc('month', CURRENT_DATE)`,
+      [userId]
+    );
+    return result.rows;
+  },
+
+  async getCompletionsThisYear(userId) {
+    const result = await pool.query(
+      `SELECT * FROM habit_completions
+       WHERE user_id = $1 AND date_completed >= date_trunc('year', CURRENT_DATE)`,
+      [userId]
+    );
+    return result.rows;
+  }
 
  
 };
