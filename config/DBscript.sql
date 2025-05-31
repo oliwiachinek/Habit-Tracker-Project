@@ -1,10 +1,17 @@
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
-    first_name Text,
-    last_name TEXT,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE friend_requests (
+  id SERIAL PRIMARY KEY,
+  requester_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+  recipient_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+  status TEXT CHECK (status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
+  UNIQUE (requester_id, recipient_id)
+);
+
 
 CREATE TABLE profiles (
     profile_id SERIAL PRIMARY KEY,
@@ -17,11 +24,17 @@ CREATE TABLE habits (
     habit_id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
-    category VARCHAR(20) NOT NULL CHECK (category IN ('daily', 'weekly', 'monthly', 'yearly')),
-    one_time BOOLEAN default false,
-    points INTEGER NOT NULL DEFAULT 0,
-    schedule JSONB,
+    frequency VARCHAR(10) NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
+    target_count INTEGER,
     created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE habit_entries (
+    entry_id SERIAL PRIMARY KEY,
+    habit_id INTEGER REFERENCES habits(habit_id) ON DELETE CASCADE,
+    entry_date DATE NOT NULL,
+    is_completed BOOLEAN DEFAULT FALSE,
+    UNIQUE (habit_id, entry_date)
 );
 
 CREATE TABLE habit_streaks (
@@ -32,14 +45,6 @@ CREATE TABLE habit_streaks (
     current_streak INTEGER DEFAULT 0,
     longest_streak INTEGER DEFAULT 0
 );
-
-CREATE TABLE habit_completions (
-    id SERIAL PRIMARY KEY,
-    habit_id INTEGER REFERENCES habits(habit_id) ON DELETE CASCADE,
-    user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
-    date_completed DATE NOT NULL
-);
-
 
 CREATE TABLE rewards (
     reward_id SERIAL PRIMARY KEY,
@@ -54,15 +59,9 @@ CREATE TABLE special_tasks (
     task_id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
     title VARCHAR(100) NOT NULL,
-    expires_at TIMESTAMP,
+    deadline DATE,
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
     points_reward INTEGER
-);
-
-CREATE TABLE special_task_templates (
-    template_id SERIAL PRIMARY KEY,
-    title VARCHAR(100) NOT NULL,
-    points_reward INTEGER NOT NULL
 );
 
 INSERT INTO special_task_templates (title, points_reward)
@@ -86,7 +85,6 @@ VALUES
 ('Complete a digital detox for 24 hours', 100),
 ('Take a class to learn something new', 100),
 ('Organize a small gathering with friends', 100);
-
 
 ALTER TABLE profiles
     ADD COLUMN email VARCHAR(100) UNIQUE,
