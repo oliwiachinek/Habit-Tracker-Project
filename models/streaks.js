@@ -1,4 +1,4 @@
-const pool = require('../db');
+const pool = require('../config/db');
 
 const completeHabit = async (habitId, userId) => {
     try {
