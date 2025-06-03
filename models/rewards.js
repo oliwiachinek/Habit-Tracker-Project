@@ -1,9 +1,9 @@
-const pool = require('../config/db');
+const pool = require('../db');
 
 const createReward = async (userId, title, pointsRequired) => {
     try {
         const result = await pool.query(
-            'INSERT INTO rewards (user_id, title, points_required) VALUES ($1, $2, $3) RETURNING *',
+            'INSERT INTO rewards (user_id, name, cost) VALUES ($1, $2, $3) RETURNING *',
             [userId, title, pointsRequired]
         );
         return result.rows[0];
@@ -24,22 +24,31 @@ const getRewardsByUser = async (userId) => {
 
 const redeemReward = async (userId, rewardId) => {
     try {
-        const user = await pool.query('SELECT points FROM users WHERE id = $1', [userId]);
-        const reward = await pool.query('SELECT * FROM rewards WHERE id = $1', [rewardId]);
+        console.log("🧠 redeemReward() called with:", { userId, rewardId });
 
-        if (user.rows[0].points < reward.rows[0].points_required) {
+        const reward = await pool.query('SELECT * FROM rewards WHERE reward_id = $1', [rewardId]);
+        const user = await pool.query('SELECT points FROM users WHERE user_id = $1', [userId]);
+
+        if (user.rows.length === 0 || reward.rows.length === 0) {
+            throw new Error('User or reward not found');
+        }
+
+        if (user.rows[0].points < reward.rows[0].cost) {
             throw new Error('Not enough points to redeem this reward.');
         }
 
         await pool.query(
-            'UPDATE users SET points = points - $1 WHERE id = $2',
-            [reward.rows[0].points_required, userId]
+            'UPDATE users SET points = points - $1 WHERE user_id = $2',
+            [reward.rows[0].cost, userId]
         );
 
         return { message: 'Reward redeemed successfully!' };
     } catch (error) {
+        console.error("❌ Error in redeemReward():", error);
         throw error;
     }
 };
+
+
 
 module.exports = { createReward, getRewardsByUser, redeemReward };
