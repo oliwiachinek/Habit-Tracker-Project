@@ -32,20 +32,27 @@ const StreaksPage = () => {
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
     const currentDay = currentDate.getDate();
 
-    const [tasks] = useState([
-        {
-            id: 1,
-            name: 'Wake up at 6',
-            completedDays: [1, 2, 3, 4, 5, 8, 9, 10, 12, 15, 16, 18, 20, 22, 24],
-            color: '#FF6384'
-        },
-        {
-            id: 2,
-            name: 'Skincare',
-            completedDays: [1, 2, 3, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
-            color: '#36A2EB'
-        }
-    ]);
+    const [tasks, setTasks] = useState([]);
+
+    useEffect(() => {
+        const fetchStreaks = async () => {
+            try {
+                const res = await fetch('/api/streaks', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const data = await res.json();
+                setTasks(data); // Should now be an array with { id, name, completedDays }
+            } catch (err) {
+                console.error("Error fetching streaks:", err);
+            }
+        };
+
+        fetchStreaks();
+    }, []);
+
+
 
     const [friends] = useState([
         { id: 1, name: 'Alex Johnson', streakPoints: 145, avatar: 'AJ' },
@@ -82,11 +89,33 @@ const StreaksPage = () => {
         handleClosePopup();
     };
 
+    const handleCompleteHabit = async (habitId) => {
+        try {
+            const res = await fetch(`/api/streaks/complete/${habitId}`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            const data = await res.json();
+            alert(data.message);
+        } catch (err) {
+            console.error("Error completing habit:", err);
+            alert("Failed to complete habit");
+        }
+    };
+
+
     const chartData = {
         labels: days.map(day => day.toString()),
         datasets: tasks.map(task => ({
             label: task.name,
-            data: days.map(day => task.completedDays.includes(day) ? tasks.indexOf(task) + 1 : null),
+            data: days.map(day =>
+                Array.isArray(task.completedDays) && task.completedDays.includes(day)
+                    ? tasks.indexOf(task) + 1
+                    : null
+            ),
             borderColor: task.color,
             backgroundColor: task.color,
             borderWidth: 2,
@@ -196,6 +225,15 @@ const StreaksPage = () => {
                             key={JSON.stringify(chartData)}
                         />
                     </div>
+                </div>
+
+                <div className="habit-actions">
+                    {tasks.map(task => (
+                        <div key={task.habit_id} className="habit-row">
+                            <span>{task.name}</span>
+                            <button onClick={() => handleCompleteHabit(task.habit_id)}>Mark Complete</button>
+                        </div>
+                    ))}
                 </div>
 
                 <div className="leaderboard-container">
