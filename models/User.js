@@ -91,11 +91,21 @@ const getUserPoints = async (userId) => {
   return result.rows[0].points;
 };
 
+const updateProfileAvatar = async (userId, avatarPath) => {
+  const result = await pool.query(
+    'UPDATE profiles SET avatar = $1 WHERE user_id = $2 RETURNING *',
+    [avatarPath, userId]
+  );
+  return result.rows[0];
+};
+
+
 module.exports = { 
   registerUser, 
   loginUser, 
   updateUserPoints, 
   updateProfile,
   getUserProfile,
-  getUserPoints 
+  getUserPoints ,
+  updateProfileAvatar
  };
