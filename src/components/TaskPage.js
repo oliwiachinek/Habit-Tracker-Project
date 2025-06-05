@@ -170,19 +170,18 @@ export default function TaskPage() {
                 if (specialRes.ok) {
                     const specialTask = await specialRes.json();
                     console.log("Special task fetched:", specialTask);
-
-                    const specialTaskObj = {
-                            name: specialTask.title,
-                            points: specialTask.points_reward,
-                            task_id: specialTask.task_id,
-                            category: 'monthly',
-                            special: true,
-                            status: specialTask.status
-                        };
-                    transformedTasks["Monthly Tasks"].push(specialTaskObj);
+                    transformedTasks["Monthly Tasks"].push({
+                        name: specialTask.title,
+                        points: specialTask.points_reward,
+                        task_id: specialTask.task_id,
+                        category: 'monthly',
+                        special: true,
+                        status: specialTask.status
+                    });
                 } else {
                     console.log('No special task found or already expired/completed.');
                 }
+
 
                 console.log("Transformed task structure:", transformedTasks);
                 setTasks(transformedTasks);
