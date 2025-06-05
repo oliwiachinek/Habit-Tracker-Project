@@ -37,13 +37,13 @@ const StreaksPage = () => {
     useEffect(() => {
         const fetchStreaks = async () => {
             try {
-                const res = await fetch('/api/streaks', {
+                const res = await fetch('http://localhost:5000/api/streaks', {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
                 const data = await res.json();
-                setTasks(data); // Should now be an array with { id, name, completedDays }
+                setTasks(data);
             } catch (err) {
                 console.error("Error fetching streaks:", err);
             }
@@ -91,7 +91,7 @@ const StreaksPage = () => {
 
     const handleCompleteHabit = async (habitId) => {
         try {
-            const res = await fetch(`/api/streaks/complete/${habitId}`, {
+            const res = await fetch(`http://localhost:5000/api/streaks/complete/${habitId}`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
