@@ -121,6 +121,7 @@ nav button.active, nav button:hover, .nav-button:hover {
     transition: all 0.3s;
     font-weight: 600;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
 }
 
 .add-task-btn:hover {

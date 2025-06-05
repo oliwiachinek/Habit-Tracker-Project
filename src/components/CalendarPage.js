@@ -55,12 +55,15 @@ const CalendarPage = () => {
                 });
                 if (!compRes.ok) throw new Error('Failed to fetch completions');
                 const completionsData = await compRes.json();
+                console.log('Completions data:', completionsData);
+                console.log('One completion object:', completionsData[0]);
+
 
                 const completionsMap = {};
                 completionsData.forEach(c => {
-                    const date = new Date(c.date_completed).getDate(); // extract day only
+                    const formattedDate = c.date_completed.split('T')[0];
                     if (!completionsMap[c.habit_id]) completionsMap[c.habit_id] = new Set();
-                    completionsMap[c.habit_id].add(date);
+                    completionsMap[c.habit_id].add(formattedDate);
                 });
 
                 const habitsWithCompletions = dailyHabits.map(habit => ({
@@ -78,47 +81,20 @@ const CalendarPage = () => {
         fetchDailyHabitsWithCompletions();
     }, []);
 
-    const toggleTaskCompletion = async (taskId, day) => {
-        try {
-            const token = localStorage.getItem('token');
-            const updatedTasks = tasks.map(task => {
-                if (task.id === taskId) {
-                    const alreadyCompleted = task.completedDays.includes(day);
-                    const updatedDays = alreadyCompleted
-                        ? task.completedDays
-                        : [...task.completedDays, day];
-                    return {...task, completedDays: updatedDays};
-                }
-                return task;
-            });
-
-            setTasks(updatedTasks);
-
-            const date = new Date(currentYear, currentDate.getMonth(), day);
-            const formattedDate = date.toISOString().split('T')[0];
-
-            if (!tasks.find(t => t.id === taskId).completedDays.includes(day)) {
-                await fetch(`http://localhost:5000/api/habits/${taskId}/entries`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({date: formattedDate})
-                });
-
-                const task = tasks.find(t => t.id === taskId);
-                setTotalPoints(prev => prev + task.points);
-            }
-        } catch (error) {
-            console.error('Error updating completion:', error);
-        }
-    };
-
     const calculateTaskCompletion = (taskId) => {
         const task = tasks.find(t => t.id === taskId);
-        const completedCount = task?.completedDays?.length || 0;
-        return Math.round((completedCount / daysInMonth) * 100);
+        if (!task) return 0;
+
+        const currentMonthStr = `${currentYear}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+
+        const completedThisMonth = task.completedDays.filter(dateStr => {
+            return dateStr.startsWith(currentMonthStr);
+        });
+
+        console.log(`Task ${taskId} completedThisMonth:`, completedThisMonth);
+        const percent = (completedThisMonth.length / daysInMonth) * 100;
+        return Math.round(percent);
+
     };
 
     const handleAddTask = async () => {
@@ -214,17 +190,21 @@ const CalendarPage = () => {
                                 <div className="task-name">{task.name}</div>
                                 <div className="task-points">{task.points}p</div>
                             </div>
-                            {days.map(day => (
-                                <div
-                                    key={`${task.id}-${day}`}
-                                    className={`day-cell calendar-box ${task.completedDays.includes(day) ? 'completed' : ''}`}
-                                    onClick={() => {
-                                        if (!task.completedDays.includes(day)) {
-                                            toggleTaskCompletion(task.id, day);
-                                        }
-                                    }}
-                                >{task.completedDays.includes(day) ? '✔️' : ''}</div>
-                            ))}
+                            {days.map(day => {
+                                const formattedDate = new Date(currentYear, currentDate.getMonth(), day).toISOString().split('T')[0];
+                                const isCompleted = task.completedDays.includes(formattedDate);
+
+                                return (
+                                    <div
+                                        key={`${task.id}-${day}`}
+                                        className={`day-cell calendar-box ${isCompleted ? 'completed' : ''}`}
+                                    >
+                                        {isCompleted ? '✔️' : ''}
+                                    </div>
+                                );
+                            })}
+
+
                             <div className="completion-cell">
                                 {calculateTaskCompletion(task.id)}%
                             </div>
