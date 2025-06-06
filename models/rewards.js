@@ -27,7 +27,7 @@ const redeemReward = async (userId, rewardId) => {
         console.log("🧠 redeemReward() called with:", { userId, rewardId });
 
         const reward = await pool.query('SELECT * FROM rewards WHERE reward_id = $1', [rewardId]);
-        const user = await pool.query('SELECT points FROM users WHERE user_id = $1', [userId]);
+        const user = await pool.query('SELECT points FROM profiles WHERE user_id = $1', [userId]);
 
         if (user.rows.length === 0 || reward.rows.length === 0) {
             throw new Error('User or reward not found');
@@ -38,7 +38,7 @@ const redeemReward = async (userId, rewardId) => {
         }
 
         await pool.query(
-            'UPDATE users SET points = points - $1 WHERE user_id = $2',
+            'UPDATE profiles SET points = points - $1 WHERE user_id = $2',
             [reward.rows[0].cost, userId]
         );
 
