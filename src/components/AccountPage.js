@@ -56,6 +56,7 @@ const AccountPage = () => {
             }
         };
 
+        fetchFriendRequests();
         fetchUserData();
     }, []);
 
@@ -172,11 +173,15 @@ const AccountPage = () => {
 
     const handleAcceptRequest = async (requestId) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/friends/accept/${requestId}`, {
+            const response = await fetch(`http://localhost:5000/api/friends/accept`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
+                body: {
+                "recipientId": localStorage.getItem('userId'),
+                "requesterId": requestId
+                }
             });
             if (response.ok) {
                 setFriendRequests(friendRequests.filter(req => req._id !== requestId));

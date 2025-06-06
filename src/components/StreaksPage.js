@@ -27,11 +27,16 @@ ChartJS.register(
 const StreaksPage = () => {
     const chartRef = useRef(null);
     const currentDate = new Date();
-    const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
+    const currentMonth = currentDate.toLocaleString('default', {month: 'long'});
     const currentYear = currentDate.getFullYear();
     const daysInMonth = new Date(currentYear, currentDate.getMonth() + 1, 0).getDate();
-    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    const days = Array.from({length: daysInMonth}, (_, i) => i + 1);
     const currentDay = currentDate.getDate();
+    const [leaderboard, setLeaderboard] = useState([]);
+    const [friendEmail, setFriendEmail] = useState('');
+    const [friendList, setFriendList] = useState([]);
+    const [showAddFriendPopup, setShowAddFriendPopup] = useState(false);
+
 
     const [tasks, setTasks] = useState([]);
 
@@ -53,18 +58,48 @@ const StreaksPage = () => {
         fetchStreaks();
     }, []);
 
+    const fetchLeaderboard = async () => {
+        try {
+            const userId = localStorage.getItem('userId');
+            const res = await fetch(`http://localhost:5000/api/friends/leaderboard/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
 
+            if (!res.ok) {
+                throw new Error('Failed to fetch leaderboard');
+            }
 
-    const [friends] = useState([
-        { id: 1, name: 'Alex Johnson', streakPoints: 145, avatar: 'AJ' },
-        { id: 2, name: 'Sam Wilson', streakPoints: 132, avatar: 'SW' },
-        { id: 3, name: 'Taylor Smith', streakPoints: 98, avatar: 'TS' },
-        { id: 4, name: 'Jordan Lee', streakPoints: 87, avatar: 'JL' },
-        { id: 5, name: 'Casey Kim', streakPoints: 76, avatar: 'CK' },
-    ]);
+            const data = await res.json();
+            setLeaderboard(data || []);
+        } catch (err) {
+            console.error("Error fetching leaderboard:", err);
+            setLeaderboard([]);
+        }
+    };
 
-    const [showAddFriendPopup, setShowAddFriendPopup] = useState(false);
-    const [friendEmail, setFriendEmail] = useState('');
+    const fetchFriends = async () => {
+        try {
+            const userId = localStorage.getItem('userId');
+            const res = await fetch(`http://localhost:5000/api/friends/leaderboard/${userId}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await res.json();
+            setFriendList(data || []);
+        } catch (err) {
+            console.error("Error fetching friends:", err);
+            setFriendList([]);
+        }
+    };
+
+    useEffect(() => {
+        fetchLeaderboard();
+        fetchFriends();
+    }, []);
+
 
     useEffect(() => {
         const chart = chartRef.current;
@@ -75,9 +110,38 @@ const StreaksPage = () => {
         };
     }, []);
 
-    const handleAddFriend = () => {
-        setShowAddFriendPopup(true);
+    const handleAddFriend = async (e) => {
+        e.preventDefault();
+
+        try {
+            const userId = localStorage.getItem('userId');
+            const res = await fetch('http://localhost:5000/api/friends/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    userId,
+                    friendEmail
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert('Friend added successfully!');
+                setFriendEmail('');
+                fetchFriends();
+            } else {
+                alert(data.message || 'Failed to add friend');
+            }
+        } catch (err) {
+            console.error("Error adding friend:", err);
+            alert('An error occurred while adding the friend.');
+        }
     };
+
 
     const handleClosePopup = () => {
         setShowAddFriendPopup(false);
@@ -159,7 +223,7 @@ const StreaksPage = () => {
                 max: tasks.length + 1,
                 ticks: {
                     stepSize: 1,
-                    callback: function(value) {
+                    callback: function (value) {
                         if (value >= 1 && value <= tasks.length) {
                             return tasks[value - 1].name;
                         }
@@ -187,13 +251,13 @@ const StreaksPage = () => {
             },
             tooltip: {
                 callbacks: {
-                    label: function(context) {
+                    label: function (context) {
                         return `${context.dataset.label}`;
                     },
-                    afterLabel: function(context) {
+                    afterLabel: function (context) {
                         return `Day ${context.label}`;
                     },
-                    title: function() {
+                    title: function () {
                         return '';
                     }
                 }
@@ -249,23 +313,24 @@ const StreaksPage = () => {
                             </tr>
                             </thead>
                             <tbody>
-                            {friends
-                                .sort((a, b) => b.streakPoints - a.streakPoints)
+                            {friendList
+                                .sort((a, b) => b.points - a.points)
                                 .map((friend, index) => (
-                                    <tr key={friend.id}>
+                                    <tr key={friend.id || friend.user_id}>
                                         <td>{index + 1}</td>
                                         <td>
                                             <div className="friend-info">
                                                 <div className="friend-avatar">{friend.avatar}</div>
-                                                <div className="friend-name">{friend.name}</div>
+                                                <div className="friend-name">{friend.full_name || friend.name}</div>
                                             </div>
                                         </td>
-                                        <td>{friend.streakPoints}</td>
+                                        <td>{friend.points}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                        <button className="add-friend-button" onClick={handleAddFriend}>
+
+                        <button className="add-friend-button" onClick={() => setShowAddFriendPopup(true)}>
                             + Add Friend
                         </button>
                     </div>
@@ -277,7 +342,7 @@ const StreaksPage = () => {
                     <div className="add-friend-popup">
                         <h3>Add Friend</h3>
                         <p>Search for your friend by their email address</p>
-                        <form onSubmit={handleSearchFriend}>
+                        <form onSubmit={handleAddFriend}>
                             <input
                                 type="email"
                                 placeholder="Enter friend's email"
@@ -287,9 +352,9 @@ const StreaksPage = () => {
                             />
                             <div className="popup-buttons">
                                 <button type="submit" className="search-button">
-                                    Search
+                                    Add
                                 </button>
-                                <button type="button" className="cancel-button" onClick={handleClosePopup}>
+                                <button type="button" className="cancel-button" onClick={() => setShowAddFriendPopup(false)}>
                                     Cancel
                                 </button>
                             </div>
@@ -299,6 +364,7 @@ const StreaksPage = () => {
             )}
         </div>
     );
-};
+
+}
 
 export default StreaksPage;
