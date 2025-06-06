@@ -38,7 +38,7 @@ const redeemReward = async (userId, rewardId) => {
         }
 
         await pool.query(
-            'UPDATE users SET points = points - $1 WHERE user_id = $2',
+            'UPDATE profiles SET points = points - $1 WHERE user_id = $2',
             [reward.rows[0].cost, userId]
         );
 

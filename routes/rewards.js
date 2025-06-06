@@ -54,19 +54,6 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 });
 
-
-const completeHabit = async (habitId, userId) => {
-  const habit = await pool.query('SELECT streak FROM habits WHERE id = $1', [habitId]);
-  const newStreak = habit.rows[0].streak + 1;
-
-  await pool.query('UPDATE habits SET streak = $1 WHERE id = $2', [newStreak, habitId]);
-  await pool.query('UPDATE users SET points = points + 10 WHERE id = $1', [userId]);
-
-  return { message: 'Habit completed, streak increased, and points added!' };
-};
-
-
-
 router.post('/', authMiddleware, async (req, res) => {
     const { title, pointsRequired } = req.body;
 
