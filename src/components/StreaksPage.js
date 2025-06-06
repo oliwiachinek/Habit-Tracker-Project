@@ -13,6 +13,7 @@ import {
     Legend
 } from 'chart.js';
 
+
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -31,24 +32,19 @@ const StreaksPage = () => {
     const daysInMonth = new Date(currentYear, currentDate.getMonth() + 1, 0).getDate();
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
     const currentDay = currentDate.getDate();
-    const [leaderboard, setLeaderboard] = useState([]);
-    const [friendEmail, setFriendEmail] = useState('');
-    const [showAddFriendPopup, setShowAddFriendPopup] = useState(false);
-
-
 
     const [tasks, setTasks] = useState([]);
 
     useEffect(() => {
         const fetchStreaks = async () => {
             try {
-                const res = await fetch('/api/streaks', {
+                const res = await fetch('http://localhost:5000/api/streaks', {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
                 const data = await res.json();
-                setTasks(data); // Should now be an array with { id, name, completedDays }
+                setTasks(data);
             } catch (err) {
                 console.error("Error fetching streaks:", err);
             }
@@ -57,24 +53,18 @@ const StreaksPage = () => {
         fetchStreaks();
     }, []);
 
-    useEffect(() => {
-        const fetchLeaderboard = async () => {
-            const userId = localStorage.getItem('userId');
-            try {
-                const response = await fetch(`http://localhost:5000/api/friends/leaderboard/${userId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setLeaderboard(data);
-                } else {
-                    alert('Failed to load leaderboard');
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        };
 
-        fetchLeaderboard();
-    }, []);
+
+    const [friends] = useState([
+        { id: 1, name: 'Alex Johnson', streakPoints: 145, avatar: 'AJ' },
+        { id: 2, name: 'Sam Wilson', streakPoints: 132, avatar: 'SW' },
+        { id: 3, name: 'Taylor Smith', streakPoints: 98, avatar: 'TS' },
+        { id: 4, name: 'Jordan Lee', streakPoints: 87, avatar: 'JL' },
+        { id: 5, name: 'Casey Kim', streakPoints: 76, avatar: 'CK' },
+    ]);
+
+    const [showAddFriendPopup, setShowAddFriendPopup] = useState(false);
+    const [friendEmail, setFriendEmail] = useState('');
 
     useEffect(() => {
         const chart = chartRef.current;
@@ -94,38 +84,15 @@ const StreaksPage = () => {
         setFriendEmail('');
     };
 
-    const handleSearchFriend = async (e) => {
+    const handleSearchFriend = (e) => {
         e.preventDefault();
-
-        const userId = localStorage.getItem('userId')
-
-        try {
-            const response = await fetch('http://localhost:5000/api/friends/request', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    requesterId: userId,
-                    recipientEmail: friendEmail
-                })
-            });
-
-            if (response.ok) {
-                alert('Friend request sent!');
-            } else {
-                const data = await response.json();
-                alert(data.error || 'Failed to send request');
-            }
-        } catch (error) {
-            alert('Error: ' + error.message);
-        }
-
+        console.log('Searching for friend with email:', friendEmail);
         handleClosePopup();
     };
 
-
     const handleCompleteHabit = async (habitId) => {
         try {
-            const res = await fetch(`/api/streaks/complete/${habitId}`, {
+            const res = await fetch(`http://localhost:5000/api/streaks/complete/${habitId}`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -282,18 +249,18 @@ const StreaksPage = () => {
                             </tr>
                             </thead>
                             <tbody>
-                            {leaderboard
-                                .sort((a, b) => b.points - a.points)
+                            {friends
+                                .sort((a, b) => b.streakPoints - a.streakPoints)
                                 .map((friend, index) => (
                                     <tr key={friend.id}>
                                         <td>{index + 1}</td>
                                         <td>
                                             <div className="friend-info">
                                                 <div className="friend-avatar">{friend.avatar}</div>
-                                                <div className="friend-name">{friend.full_name}</div>
+                                                <div className="friend-name">{friend.name}</div>
                                             </div>
                                         </td>
-                                        <td>{friend.points}</td>
+                                        <td>{friend.streakPoints}</td>
                                     </tr>
                                 ))}
                             </tbody>
