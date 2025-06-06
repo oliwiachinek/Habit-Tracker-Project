@@ -199,4 +199,3 @@ const RewardsPage = () => {
 };
 
 export default RewardsPage;
-
