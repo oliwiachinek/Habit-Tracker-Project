@@ -1,5 +1,4 @@
 require('dotenv').config();
-require('./specialTaskScheduler'); 
 
 const express = require('express');
 const cors = require('cors');
