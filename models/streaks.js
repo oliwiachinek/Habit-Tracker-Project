@@ -34,7 +34,7 @@ const completeHabit = async (habitId, userId) => {
 
 
 const getUserStreaks = async (userId) => {
-    const habits = await pool.query('SELECT habit_id, title FROM habits WHERE user_id = $1', [userId]);
+    const habits = await pool.query('SELECT habit_id, name FROM habits WHERE user_id = $1', [userId]);
 
     const data = [];
 
@@ -56,11 +56,9 @@ const getUserStreaks = async (userId) => {
 
 
 
-
-
 const getUserPoints = async (userId) => {
     try {
-        const result = await pool.query('SELECT points FROM users WHERE id = $1', [userId]);
+        const result = await pool.query('SELECT points FROM profiles WHERE id = $1', [userId]);
         return result.rows[0];
     } catch (error) {
         throw error;
