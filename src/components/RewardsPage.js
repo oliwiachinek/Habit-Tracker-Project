@@ -12,7 +12,7 @@ const RewardsPage = () => {
     useEffect(() => {
         const fetchRewards = async () => {
             try {
-                const res = await fetch('/api/rewards', {
+                const res = await fetch('http://localhost:5000/api/rewards', {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
@@ -26,7 +26,7 @@ const RewardsPage = () => {
 
         const fetchPoints = async () => {
             try {
-                const res = await fetch('/api/streaks/points', {
+                const res = await fetch('http://localhost:5000/api/profile/points', {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
@@ -51,7 +51,7 @@ const RewardsPage = () => {
         if (!newReward.name || !newReward.price) return alert("Fill out all fields");
 
         try {
-            const res = await fetch('/api/rewards', {
+            const res = await fetch('http://localhost:5000/api/rewards', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ const RewardsPage = () => {
     const handleDeleteReward = async (rewardId) => {
         if (!window.confirm("Are you sure?")) return;
         try {
-            await fetch(`/api/rewards/${rewardId}`, {
+            await fetch(`http://localhost:5000/api/rewards/${rewardId}`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -89,7 +89,7 @@ const RewardsPage = () => {
 
     const handlePurchase = async (rewardId) => {
         try {
-            const res = await fetch(`/api/rewards/redeem/${rewardId}`, {
+            const res = await fetch(`http://localhost:5000/api/rewards/redeem/${rewardId}`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -199,3 +199,4 @@ const RewardsPage = () => {
 };
 
 export default RewardsPage;
+
