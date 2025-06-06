@@ -2,53 +2,59 @@ import React, { useState, useEffect } from 'react';
 import '../styles/TaskPage.css';
 import { Link } from 'react-router-dom';
 
-const TaskBox = ({ title, tasks, onAddTask, onTaskComplete}) => {
+const TaskBox = ({ title, tasks, onAddTask, onTaskComplete, onSpecialTaskComplete }) => {
     return (
         <div className="task-box">
             <h2>{title}</h2>
             <button className="add-btn" onClick={() => onAddTask(title)}>+</button>
             <ul>
-                {tasks.map((task, index) => (
-                    <li key={index}>
-                        {task.special && <span className="crown-icon">👑</span>}
-                        <span className={task.special ? "special-task" : ""}>{task.name}</span>
-                        <span className="points">{task.points}p</span>
-                        <input
-                            type="checkbox"
-                            checked={
-                                task.category === 'daily'
-                                    ? task.completedToday
-                                    : task.category === 'weekly'
-                                        ? task.completedThisWeek
-                                        : task.category === 'monthly'
-                                            ? task.completedThisMonth
-                                            : task.completedThisYear
-                            }
-                            disabled={
-                                task.category === 'daily'
-                                    ? task.completedToday
-                                    : task.category === 'weekly'
-                                        ? task.completedThisWeek
-                                        : task.category === 'monthly'
-                                            ? task.completedThisMonth
-                                            : task.completedThisYear
-                            }
-                            onChange={(e) => onTaskComplete(task.habit_id, title, e.target.checked)}
-                        />
-                    </li>
-                ))}
+                {tasks.map((task, index) => {
+                    let isCompleted = false;
+                    let isExpired = false;
+
+                    if (task.special) {
+                        isCompleted = task.status === 'completed';
+                        isExpired = task.status === 'failed';
+                    } else {
+                        isCompleted =
+                            task.category === 'daily' ? task.completedToday :
+                                task.category === 'weekly' ? task.completedThisWeek :
+                                    task.category === 'monthly' ? task.completedThisMonth :
+                                        task.completedThisYear;
+                    }
+
+                    return (
+                        <li key={index}>
+                            {task.special && <span className="crown-icon">👑</span>}
+                            <span className={task.special ? "special-task" : ""}>{task.name}</span>
+                            <span className="points">{task.points}p</span>
+                            {task.special && isExpired ? (
+                                <span className="expired-icon">❌</span>
+                            ) : (
+                                <input
+                                    type="checkbox"
+                                    checked={isCompleted}
+                                    disabled={isCompleted || isExpired}
+                                    onChange={(e) => {
+                                        if (task.special) {
+                                            onSpecialTaskComplete(task.task_id, e.target.checked);
+                                        } else {
+                                            onTaskComplete(task.habit_id, title, e.target.checked);
+                                        }
+                                    }}
+                                />
+                            )}
+                        </li>
+                    );
+                })}
             </ul>
         </div>
     );
 
 
 
-};
 
-const specialMonthlyTasks = [
-    "Go for a 2-hour walk in nature",
-    "Make a handmade present for a friend"
-];
+};
 
 export default function TaskPage() {
     const [date, setDate] = useState(new Date().toLocaleDateString());
@@ -58,15 +64,7 @@ export default function TaskPage() {
     const [tasks, setTasks] = useState({
         "Daily Tasks": [],
         "Weekly Tasks": [],
-        "Monthly Tasks": [
-            {
-                name: specialMonthlyTasks[new Date().getMonth() % specialMonthlyTasks.length],
-                points: "50",
-                special: true,
-                completedToday: false,
-                habit_id: null
-            }
-        ],
+        "Monthly Tasks": [],
         "Yearly Tasks": []
     });
     const [currentCategory, setCurrentCategory] = useState('');
@@ -88,6 +86,7 @@ export default function TaskPage() {
     useEffect(() => {
         const fetchTasks = async () => {
             const token = localStorage.getItem("token");
+            const userId = localStorage.getItem("userId");
             try {
                 const res = await fetch('http://localhost:5000/api/habits', {
                     method: 'GET',
@@ -138,15 +137,7 @@ export default function TaskPage() {
                 const transformedTasks = {
                     "Daily Tasks": [],
                     "Weekly Tasks": [],
-                    "Monthly Tasks": [
-                        {
-                            name: specialMonthlyTasks[new Date().getMonth() % specialMonthlyTasks.length],
-                            points: "50",
-                            special: true,
-                            completedToday: false,
-                            habit_id: null,
-                        }
-                    ],
+                    "Monthly Tasks": [],
                     "Yearly Tasks": []
                 };
                 data.forEach(task => {
@@ -171,9 +162,30 @@ export default function TaskPage() {
                         transformedTasks["Yearly Tasks"].push(taskObj);
                     }
                 });
-                console.log("Transformed task structure:", transformedTasks);
 
+                const specialRes = await fetch(`http://localhost:5000/api/special-tasks/random/${userId}`, {
+                    method: 'GET',
+                    headers: {'Authorization': `Bearer ${token}` }
+                });
+                if (specialRes.ok) {
+                    const specialTask = await specialRes.json();
+                    console.log("Special task fetched:", specialTask);
+                    transformedTasks["Monthly Tasks"].push({
+                        name: specialTask.title,
+                        points: specialTask.points_reward,
+                        task_id: specialTask.task_id,
+                        category: 'monthly',
+                        special: true,
+                        status: specialTask.status
+                    });
+                } else {
+                    console.log('No special task found or already expired/completed.');
+                }
+
+
+                console.log("Transformed task structure:", transformedTasks);
                 setTasks(transformedTasks);
+
             } catch (err) {
                 console.error('Error fetching tasks:', err);
                 setMessage('Error fetching tasks');
@@ -270,6 +282,50 @@ export default function TaskPage() {
         } catch (err) {
             console.error("Error updating task completion:", err);
             setMessage("Error completing task");
+        }
+    };
+
+    const handleSpecialTaskComplete = async (task_id) => {
+        const token = localStorage.getItem("token");
+        console.log("Sending PATCH request for special task:", { task_id });
+
+        try {
+            const res = await fetch(`http://localhost:5000/api/special-tasks/${task_id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ status: "completed" }),
+            });
+
+            console.log("Response status:", res.status);
+            const resData = await res.json();
+            console.log("Response data:", resData);
+
+            if (!res.ok) throw new Error(resData.error || "Failed to update special task status");
+
+            setTasks((prevTasks) => {
+                const updatedMonthlyTasks = prevTasks["Monthly Tasks"].map(task => {
+                    if (task.task_id === task_id) {
+                        return {
+                            ...task,
+                            status: "completed",
+                        };
+                    }
+                    return task;
+                });
+
+                return {
+                    ...prevTasks,
+                    "Monthly Tasks": updatedMonthlyTasks,
+                };
+            });
+
+            setMessage("Special task completed!");
+        } catch (err) {
+            console.error("Error updating special task status:", err);
+            setMessage(err.message || "Error updating special task");
         }
     };
 
@@ -458,6 +514,7 @@ export default function TaskPage() {
                         tasks={tasks[category]}
                         onAddTask={handleAddTask}
                         onTaskComplete={handleTaskComplete}
+                        onSpecialTaskComplete={handleSpecialTaskComplete}
                         category={category}
                     />
                 ))}
