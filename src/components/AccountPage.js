@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FiUser, FiTrash2, FiLogOut, FiEdit, FiSave, FiX, FiUpload, FiCamera, FiUsers, FiUserPlus, FiCheck, FiUserX } from 'react-icons/fi';
-import "../styles/AccountPage.css";
+import {
+    FiUser, FiTrash2, FiLogOut, FiEdit, FiSave, FiX, FiCamera, FiUserPlus, FiCheck, FiUserX} from 'react-icons/fi';
+import '../styles/AccountPage.css';
 
 const AccountPage = () => {
     const [user, setUser] = useState({
@@ -11,7 +12,7 @@ const AccountPage = () => {
         avatar: ''
     });
     const [editing, setEditing] = useState(false);
-    const [tempUser, setTempUser] = useState({...user});
+    const [tempUser, setTempUser] = useState({ ...user });
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showFriendRequests, setShowFriendRequests] = useState(false);
     const [friendRequests, setFriendRequests] = useState([]);
@@ -26,6 +27,7 @@ const AccountPage = () => {
             });
             if (response.ok) {
                 const data = await response.json();
+                console.log("Fetched user data:", data);
                 if (data.join_date) {
                     const formattedDate = new Date(data.join_date).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -36,33 +38,37 @@ const AccountPage = () => {
                 }
                 setUser(data);
                 setTempUser(data);
+                fetchFriendRequests(localStorage.getItem('userId'));
             }
         };
 
+        const userId = localStorage.getItem('userId');
+
         const fetchFriendRequests = async () => {
-            const response = await fetch('http://localhost:5000/api/friends/requests', {
+            const response = await fetch(`http://localhost:5000/api/friends/pending/${userId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 }
             });
             if (response.ok) {
                 const data = await response.json();
-                setFriendRequests(data.requests || []);
+                setFriendRequests(data || []);
             }
         };
 
         fetchUserData();
-        fetchFriendRequests();
     }, []);
 
     const handleEdit = () => {
-        setTempUser({...user});
+        setTempUser({ ...user });
         setEditing(true);
     };
 
     const handleSave = async () => {
+        const user_id = localStorage.getItem('userId');
+
         try {
-            const response = await fetch(`http://localhost:5000/api/${user.user_id}/profile`, {
+            const response = await fetch(`http://localhost:5000/api/profile/${user_id}/profile`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -70,7 +76,6 @@ const AccountPage = () => {
                 },
                 body: JSON.stringify(tempUser)
             });
-
             if (response.ok) {
                 const updatedUser = await response.json();
                 setUser(updatedUser);
@@ -89,17 +94,50 @@ const AccountPage = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setTempUser({...tempUser, [name]: value});
+        setTempUser({ ...tempUser, [name]: value });
     };
 
-    const handleImageUpload = (e) => {
+    const handleImageUpload = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setTempUser({...tempUser, avatar: reader.result});
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const user_id = localStorage.getItem('userId');
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/profile/${user_id}/avatar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+                body: formData,
+            });
+
+            if (response.ok) {
+                const updatedProfileResponse = await fetch('http://localhost:5000/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    },
+                });
+                if (updatedProfileResponse.ok) {
+                    const updatedProfile = await updatedProfileResponse.json();
+                    if (updatedProfile.join_date) {
+                        updatedProfile.join_date = new Date(updatedProfile.join_date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                    }
+                    setUser(updatedProfile);
+                    setTempUser(updatedProfile);
+                }
+            } else {
+                throw new Error('Failed to upload avatar');
+            }
+        } catch (error) {
+            alert(error.message);
         }
     };
 
@@ -115,7 +153,6 @@ const AccountPage = () => {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
             });
-
             if (response.ok) {
                 alert('Account deleted successfully');
                 localStorage.removeItem('token');
@@ -141,7 +178,6 @@ const AccountPage = () => {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
             });
-
             if (response.ok) {
                 setFriendRequests(friendRequests.filter(req => req._id !== requestId));
             } else {
@@ -160,7 +196,6 @@ const AccountPage = () => {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
             });
-
             if (response.ok) {
                 setFriendRequests(friendRequests.filter(req => req._id !== requestId));
             } else {
@@ -189,11 +224,13 @@ const AccountPage = () => {
             <div className="simple-account-content">
                 <div className="user-profile">
                     <div className="avatar-container">
+                        {user.avatar && (
                         <img
-                            src={editing ? tempUser.avatar : user.avatar}
-                            alt={user.name}
+                            src={`http://localhost:5000${tempUser.avatar}`}
+                            alt={tempUser.full_name}
                             className="user-avatar"
                         />
+                        )}
                         {editing && (
                             <>
                                 <button className="upload-btn" onClick={triggerFileInput}>
@@ -240,18 +277,15 @@ const AccountPage = () => {
                         {editing ? (
                             <>
                                 <button onClick={handleSave} className="save-btn">
-                                    <FiSave className="icon" />
-                                    Save
+                                    <FiSave className="icon" /> Save
                                 </button>
                                 <button onClick={handleCancel} className="cancel-btn">
-                                    <FiX className="icon" />
-                                    Cancel
+                                    <FiX className="icon" /> Cancel
                                 </button>
                             </>
                         ) : (
                             <button onClick={handleEdit} className="edit-btn">
-                                <FiEdit className="icon" />
-                                Edit Profile
+                                <FiEdit className="icon" /> Edit Profile
                             </button>
                         )}
                     </div>
@@ -270,16 +304,14 @@ const AccountPage = () => {
                     </button>
 
                     <button className="logout-btn" onClick={handleLogout}>
-                        <FiLogOut className="icon" />
-                        Log Out
+                        <FiLogOut className="icon" /> Log Out
                     </button>
 
                     <button
                         className="delete-btn"
                         onClick={() => setShowDeleteConfirm(true)}
                     >
-                        <FiTrash2 className="icon" />
-                        Delete Account
+                        <FiTrash2 className="icon" /> Delete Account
                     </button>
                 </div>
 
