@@ -1,5 +1,4 @@
 require('dotenv').config();
-require('./specialTaskScheduler'); 
 
 const express = require('express');
 const cors = require('cors');
@@ -26,7 +25,7 @@ app.use('/api/habits', habitRoutes);
 app.use('/api/rewards', rewardRoutes);
 app.use('/api/streaks', streakRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/specialTasks', specialTasksRoutes);
+app.use('/api/special-tasks', specialTasksRoutes);
 
 app.get('/', (req, res) => {
   res.send('Habit Tracker API is running');
