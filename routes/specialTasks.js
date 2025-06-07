@@ -31,20 +31,12 @@ router.get('/random/:userId', async (req, res) => {
     const lastTask = lastTaskResult.rows[0];
     const now = new Date();
 
-    if (lastTask) {
-      const lastTaskExpiresAt = new Date(lastTask.expires_at);
+    if (lastTask && lastTask.status === 'completed' && new Date(lastTask.expires_at) > now) {
+      return res.json(lastTask);
+    }
 
-      if (lastTask.status === 'pending' && lastTaskExpiresAt > now) {
-        return res.json(lastTask);
-      }
-
-      if (
-        lastTask.status !== 'failed' &&
-        lastTask.status !== 'completed' &&
-        lastTaskExpiresAt > now
-      ) {
-        return res.status(400).json({ error: 'You already have an active task' });
-      }
+    if (lastTask && lastTask.status === 'pending' && new Date(lastTask.expires_at) > now) {
+      return res.json(lastTask);
     }
 
     const isFirstDayOfMonth = now.getDate() === 1;
@@ -79,7 +71,6 @@ router.get('/random/:userId', async (req, res) => {
   }
 });
 
-
 router.patch('/:taskId', async (req, res) => {
   const { taskId } = req.params;
   const { status } = req.body;
@@ -90,7 +81,7 @@ router.patch('/:taskId', async (req, res) => {
 
   try {
     const taskResult = await pool.query(
-      `SELECT status FROM special_tasks WHERE task_id = $1`,
+      `SELECT status, user_id, points_reward FROM special_tasks WHERE task_id = $1`,
       [taskId]
     );
 
@@ -109,12 +100,25 @@ router.patch('/:taskId', async (req, res) => {
       [taskId]
     );
 
-    res.json(updateResult.rows[0]);
+    const updatedTask = updateResult.rows[0];
+
+    const pointsEarned = updatedTask.points_reward || 0;
+    const userId = updatedTask.user_id;
+
+    if (pointsEarned > 0) {
+      await pool.query(
+        `UPDATE profiles SET points = points + $1 WHERE user_id = $2`,
+        [pointsEarned, userId]
+      );
+    }
+
+    res.json(updatedTask);
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: 'Failed to update task status' });
   }
 });
+
 
 
 router.get('/user/:userId', async (req, res) => {
