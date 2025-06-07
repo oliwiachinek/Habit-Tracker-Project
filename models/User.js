@@ -100,6 +100,14 @@ const updateProfileAvatar = async (userId, avatarPath) => {
 };
 
 
+const deleteUser = async (userId) => {
+  await pool.query('DELETE FROM profiles WHERE user_id = $1', [userId]);
+
+  await pool.query('DELETE FROM users WHERE user_id = $1', [userId]);
+};
+
+
+
 module.exports = { 
   registerUser, 
   loginUser, 
@@ -107,5 +115,6 @@ module.exports = {
   updateProfile,
   getUserProfile,
   getUserPoints ,
-  updateProfileAvatar
+  updateProfileAvatar,
+  deleteUser
  };

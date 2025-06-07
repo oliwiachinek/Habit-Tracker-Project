@@ -69,14 +69,14 @@ router.post('/request', async (req, res) => {
 });
 
 router.post('/accept', async (req, res) => {
-  const { recipientId, requesterId } = req.body;
+  const { requestId } = req.body; 
 
   try {
     await db.query(`
       UPDATE friend_requests
       SET status = 'accepted'
-      WHERE requester_id = $1 AND recipient_id = $2 AND status = 'pending'
-    `, [requesterId, recipientId]);
+      WHERE id = $1 AND status = 'pending'
+    `, [requestId]);
 
     res.status(200).json({ message: 'Friend request accepted!' });
   } catch (err) {
@@ -84,12 +84,35 @@ router.post('/accept', async (req, res) => {
   }
 });
 
+router.post('/reject/:requesterId', async (req, res) => {
+  const recipientId = req.body.recipientId;
+  const requesterId = req.params.requesterId;  
+
+  if (!recipientId || !requesterId) {
+    return res.status(400).json({ error: 'Missing requesterId or recipientId' });
+  }
+
+  try {
+    await db.query(`
+      DELETE FROM friend_requests
+      WHERE requester_id = $1 AND recipient_id = $2 AND status = 'pending'
+    `, [requesterId, recipientId]);
+
+    res.status(200).json({ message: 'Friend request rejected!' });
+  } catch (err) {
+    console.error('Error rejecting friend request:', err);
+    res.status(500).json({ error: 'Failed to reject friend request' });
+  }
+});
+
+
+
 router.get('/pending/:userId', async (req, res) => {
   const userId = req.params.userId;
 
   try {
     const result = await db.query(`
-      SELECT fr.requester_id, p.full_name, p.email
+      SELECT fr.id as request_id, fr.requester_id, p.full_name, p.email
       FROM friend_requests fr
       JOIN profiles p ON p.user_id = fr.requester_id
       WHERE fr.recipient_id = $1 AND fr.status = 'pending'
@@ -100,6 +123,7 @@ router.get('/pending/:userId', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch pending requests' });
   }
 });
+
 
 router.get('/leaderboard/:userId', async (req, res) => {
   const userId = parseInt(req.params.userId);

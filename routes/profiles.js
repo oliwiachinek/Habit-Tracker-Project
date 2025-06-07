@@ -50,15 +50,51 @@ router.get('/', async (req, res) => {
 router.patch('/:userId/profile', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { fullName, email, avatar } = req.body;
+    const updates = req.body;
 
-    const updatedProfile = await User.updateProfile(userId, fullName, email, avatar);
+    delete updates.join_date;
 
-    res.json(updatedProfile);
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No fields provided to update' });
+    }
+
+    const setClause = Object.keys(updates)
+      .map((field, index) => `${field} = $${index + 1}`)
+      .join(', ');
+
+    const values = Object.values(updates);
+    values.push(userId);
+
+    const query = `
+      UPDATE profiles
+      SET ${setClause}
+      WHERE user_id = $${values.length}
+      RETURNING user_id, full_name, email, avatar, join_date
+    `;
+
+    const { rows } = await pool.query(query, values);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    res.json(rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+router.delete('/', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await User.deleteUser(userId);
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 
 router.get('/points', async (req, res) => {
