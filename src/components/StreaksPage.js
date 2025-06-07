@@ -32,10 +32,11 @@ const StreaksPage = () => {
     const daysInMonth = new Date(currentYear, currentDate.getMonth() + 1, 0).getDate();
     const days = Array.from({length: daysInMonth}, (_, i) => i + 1);
     const currentDay = currentDate.getDate();
-    const [leaderboard, setLeaderboard] = useState([]);
     const [friendEmail, setFriendEmail] = useState('');
     const [friendList, setFriendList] = useState([]);
     const [showAddFriendPopup, setShowAddFriendPopup] = useState(false);
+    const [friendError, setFriendError] = useState('');
+
 
 
     const [tasks, setTasks] = useState([]);
@@ -58,27 +59,6 @@ const StreaksPage = () => {
         fetchStreaks();
     }, []);
 
-    const fetchLeaderboard = async () => {
-        try {
-            const userId = localStorage.getItem('userId');
-            const res = await fetch(`http://localhost:5000/api/friends/leaderboard/${userId}`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (!res.ok) {
-                throw new Error('Failed to fetch leaderboard');
-            }
-
-            const data = await res.json();
-            setLeaderboard(data || []);
-        } catch (err) {
-            console.error("Error fetching leaderboard:", err);
-            setLeaderboard([]);
-        }
-    };
-
     const fetchFriends = async () => {
         try {
             const userId = localStorage.getItem('userId');
@@ -96,7 +76,6 @@ const StreaksPage = () => {
     };
 
     useEffect(() => {
-        fetchLeaderboard();
         fetchFriends();
     }, []);
 
@@ -113,6 +92,8 @@ const StreaksPage = () => {
     const handleAddFriend = async (e) => {
         e.preventDefault();
 
+        setFriendError('');
+
         try {
             const userId = localStorage.getItem('userId');
             const res = await fetch('http://localhost:5000/api/friends/request', {
@@ -122,36 +103,25 @@ const StreaksPage = () => {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify({
-                    userId,
-                    friendEmail
+                    requesterId: userId,
+                    recipientEmail: friendEmail
                 })
             });
 
             const data = await res.json();
 
             if (res.ok) {
-                alert('Friend added successfully!');
                 setFriendEmail('');
                 fetchFriends();
+                setShowAddFriendPopup(false);
+                alert('Friend request sent !');
             } else {
-                alert(data.message || 'Failed to add friend');
+                setFriendError(data.error || 'Failed to send friend request.');
             }
         } catch (err) {
-            console.error("Error adding friend:", err);
-            alert('An error occurred while adding the friend.');
+            console.error('Error sending friend request:', err);
+            setFriendError('An error occurred while sending the friend request.');
         }
-    };
-
-
-    const handleClosePopup = () => {
-        setShowAddFriendPopup(false);
-        setFriendEmail('');
-    };
-
-    const handleSearchFriend = (e) => {
-        e.preventDefault();
-        console.log('Searching for friend with email:', friendEmail);
-        handleClosePopup();
     };
 
     const handleCompleteHabit = async (habitId) => {
@@ -350,6 +320,9 @@ const StreaksPage = () => {
                                 onChange={(e) => setFriendEmail(e.target.value)}
                                 required
                             />
+                            {friendError && (
+                                <p style={{ color: 'red', marginTop: '4px' }}>{friendError}</p>
+                            )}
                             <div className="popup-buttons">
                                 <button type="submit" className="search-button">
                                     Add
