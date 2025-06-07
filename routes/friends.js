@@ -5,26 +5,65 @@ const db = require('../config/db');
 router.post('/request', async (req, res) => {
   const { requesterId, recipientEmail } = req.body;
 
+  if (!requesterId || !recipientEmail) {
+    return res.status(400).json({ error: 'Missing requesterId or recipientEmail' });
+  }
+
   try {
-    const recipientRes = await db.query(`SELECT user_id FROM profiles WHERE email = $1`, [recipientEmail]);
+    const recipientRes = await db.query(
+      `SELECT user_id FROM profiles WHERE email = $1`,
+      [recipientEmail]
+    );
     if (recipientRes.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User does not exist' });
     }
 
     const recipientId = recipientRes.rows[0].user_id;
 
-    if (requesterId === recipientId) {
+    if (parseInt(requesterId) === recipientId) {
       return res.status(400).json({ error: "You can't add yourself" });
     }
 
-    await db.query(`
-      INSERT INTO friend_requests (requester_id, recipient_id)
-      VALUES ($1, $2)
-      ON CONFLICT DO NOTHING
-    `, [requesterId, recipientId]);
+
+    const friendsRes = await db.query(
+      `
+        SELECT 1 FROM friend_requests
+        WHERE (
+          (requester_id = $1 AND recipient_id = $2)
+          OR (requester_id = $2 AND recipient_id = $1)
+        ) AND status = 'accepted'
+      `,
+      [requesterId, recipientId]
+    );
+    if (friendsRes.rows.length > 0) {
+      return res.status(400).json({ error: 'You are already friends' });
+    }
+
+    const pendingRes = await db.query(
+      `
+        SELECT 1 FROM friend_requests
+        WHERE (
+          (requester_id = $1 AND recipient_id = $2)
+          OR (requester_id = $2 AND recipient_id = $1)
+        ) AND status = 'pending'
+      `,
+      [requesterId, recipientId]
+    );
+    if (pendingRes.rows.length > 0) {
+      return res.status(400).json({ error: 'Friend request already pending' });
+    }
+
+    await db.query(
+      `
+        INSERT INTO friend_requests (requester_id, recipient_id, status)
+        VALUES ($1, $2, 'pending')
+      `,
+      [requesterId, recipientId]
+    );
 
     res.status(200).json({ message: 'Friend request sent!' });
   } catch (err) {
+    console.error('Error sending friend request:', err);
     res.status(500).json({ error: 'Failed to send friend request' });
   }
 });
