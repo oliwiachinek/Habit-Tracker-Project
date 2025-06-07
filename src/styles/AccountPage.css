@@ -369,12 +369,14 @@ nav {
     align-items: center;
     padding: 12px 0;
     border-bottom: 1px solid #eee;
+    gap: 12px;
 }
 
 .request-info {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-grow: 1;
 }
 
 .user-icon {
@@ -384,6 +386,7 @@ nav {
 .request-actions {
     display: flex;
     gap: 8px;
+    margin-left: 8px;
 }
 
 .accept-btn, .reject-btn {

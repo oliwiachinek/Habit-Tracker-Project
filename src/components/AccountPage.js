@@ -28,14 +28,7 @@ const AccountPage = () => {
             if (response.ok) {
                 const data = await response.json();
                 console.log("Fetched user data:", data);
-                if (data.join_date) {
-                    const formattedDate = new Date(data.join_date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
-                    data.join_date = formattedDate;
-                }
+
                 setUser(data);
                 setTempUser(data);
                 fetchFriendRequests(localStorage.getItem('userId'));
@@ -61,12 +54,18 @@ const AccountPage = () => {
     }, []);
 
     const handleEdit = () => {
-        setTempUser({ ...user });
+        setTempUser({
+            full_name: user.full_name,
+            email: user.email,
+            avatar: user.avatar
+        });
         setEditing(true);
     };
 
+
     const handleSave = async () => {
         const user_id = localStorage.getItem('userId');
+        const { full_name, email } = tempUser;
 
         try {
             const response = await fetch(`http://localhost:5000/api/profile/${user_id}/profile`, {
@@ -75,11 +74,12 @@ const AccountPage = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 },
-                body: JSON.stringify(tempUser)
+                body: JSON.stringify({ full_name, email }),
             });
             if (response.ok) {
                 const updatedUser = await response.json();
                 setUser(updatedUser);
+                setTempUser(updatedUser);
                 setEditing(false);
             } else {
                 throw new Error('Failed to update profile');
@@ -88,6 +88,7 @@ const AccountPage = () => {
             alert(error.message);
         }
     };
+
 
     const handleCancel = () => {
         setEditing(false);
@@ -175,16 +176,14 @@ const AccountPage = () => {
         try {
             const response = await fetch(`http://localhost:5000/api/friends/accept`, {
                 method: 'POST',
+                body: JSON.stringify({ requestId }),
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                },
-                body: {
-                "recipientId": localStorage.getItem('userId'),
-                "requesterId": requestId
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
             if (response.ok) {
-                setFriendRequests(friendRequests.filter(req => req._id !== requestId));
+                setFriendRequests(friendRequests.filter(req => req.request_id !== requestId));
             } else {
                 throw new Error('Failed to accept friend request');
             }
@@ -202,7 +201,7 @@ const AccountPage = () => {
                 },
             });
             if (response.ok) {
-                setFriendRequests(friendRequests.filter(req => req._id !== requestId));
+                setFriendRequests(friendRequests.filter(req => req.request_id !== requestId));
             } else {
                 throw new Error('Failed to reject friend request');
             }
@@ -210,6 +209,7 @@ const AccountPage = () => {
             alert(error.message);
         }
     };
+
 
     return (
         <div className="simple-account-container">
@@ -276,8 +276,13 @@ const AccountPage = () => {
                         </>
                     )}
 
-                    <p className="join-date">Member since {user.join_date}</p>
-
+                    <p className="join-date">
+                        Member since {new Date(user.join_date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                    })}
+                    </p>
                     <div className="edit-actions">
                         {editing ? (
                             <>
@@ -361,29 +366,31 @@ const AccountPage = () => {
                             ) : (
                                 <ul className="request-list">
                                     {friendRequests.map(request => (
-                                        <li key={request._id} className="request-item">
+                                        <li key={request.request_id}>
                                             <div className="request-info">
                                                 <FiUser className="user-icon" />
-                                                <span>{request.from.name || request.from.email}</span>
+                                                <span>{request.full_name || request.email || 'Unknown'}</span>
                                             </div>
                                             <div className="request-actions">
                                                 <button
                                                     className="accept-btn"
-                                                    onClick={() => handleAcceptRequest(request._id)}
+                                                    onClick={() => handleAcceptRequest(request.request_id)}
                                                 >
                                                     <FiCheck />
                                                 </button>
                                                 <button
                                                     className="reject-btn"
-                                                    onClick={() => handleRejectRequest(request._id)}
+                                                    onClick={() => handleRejectRequest(request.request_id)}
                                                 >
                                                     <FiUserX />
                                                 </button>
                                             </div>
                                         </li>
                                     ))}
+
                                 </ul>
                             )}
+
                         </div>
                     </div>
                 )}
