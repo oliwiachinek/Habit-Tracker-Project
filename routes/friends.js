@@ -11,7 +11,7 @@ router.post('/request', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const recipientId = recipientRes.rows[0].id;
+    const recipientId = recipientRes.rows[0].user_id;
 
     if (requesterId === recipientId) {
       return res.status(400).json({ error: "You can't add yourself" });
@@ -79,7 +79,7 @@ router.get('/leaderboard/:userId', async (req, res) => {
     `, [userId]);
 
     const selfRes = await db.query(`
-      SELECT user_id, full_name, email, points FROM profiles WHERE id = $1
+      SELECT user_id, full_name, email, points FROM profiles WHERE user_id = $1
     `, [userId]);
 
     const leaderboard = [selfRes.rows[0], ...friendsRes.rows];
