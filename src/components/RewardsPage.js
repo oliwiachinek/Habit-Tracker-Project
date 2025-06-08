@@ -18,6 +18,7 @@ const RewardsPage = () => {
                     }
                 });
                 const data = await res.json();
+                console.log("Fetched rewards data:", data);
                 setRewards(data);
             } catch (err) {
                 console.error('❌ Failed to fetch rewards:', err);
@@ -50,6 +51,10 @@ const RewardsPage = () => {
     const handleAddReward = async () => {
         if (!newReward.name || !newReward.price) return alert("Fill out all fields");
 
+        if (parseInt(newReward.price) < 0) {
+            return alert("Points cost cannot be negative");
+        }
+
         try {
             const res = await fetch('http://localhost:5000/api/rewards', {
                 method: 'POST',
@@ -58,8 +63,9 @@ const RewardsPage = () => {
                     Authorization: `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify({
-                    title: newReward.name,
-                    pointsRequired: parseInt(newReward.price)
+                    name: newReward.name,
+                    cost: parseInt(newReward.price),
+                    image: newReward.image
                 })
             });
 
@@ -169,17 +175,24 @@ const RewardsPage = () => {
 
                 <div className="rewards-grid">
                     {rewards.map(reward => (
-                        <div key={reward.reward_id} className={`reward-card ${reward.purchased ? 'purchased' : ''}`}>
+                        <div key={reward.reward_id}
+                             className={`reward-card ${reward.claimed ? 'purchased' : ''}`}>
                             <div className="reward-image">
-                                <img src={reward.image || 'https://via.placeholder.com/150'} alt={reward.title} />
-                                <button className="delete-reward-btn" onClick={() => handleDeleteReward(reward.reward_id)}>
+                                <img
+                                    src={reward.image || '/fallback.jpg'}
+                                    alt={reward.name}
+                                    style={{ width: '150px', height: '150px', objectFit: 'cover' }}
+                                />
+
+                                <button className="delete-reward-btn"
+                                        onClick={() => handleDeleteReward(reward.reward_id)}>
                                     <FaTrash />
                                 </button>
                             </div>
                             <div className="reward-info">
-                                <h3>{reward.title}</h3>
+                                <h3>{reward.name}</h3>
                                 <div className="reward-price">{reward.cost} points</div>
-                                {reward.purchased ? (
+                                {reward.claimed ? (
                                     <div className="purchased-label">Purchased!</div>
                                 ) : (
                                     <button

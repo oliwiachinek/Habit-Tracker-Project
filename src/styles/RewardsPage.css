@@ -175,6 +175,7 @@ nav {
 .reward-image {
     height: 150px;
     overflow: hidden;
+    text-align: center;
 }
 
 .reward-image img {
