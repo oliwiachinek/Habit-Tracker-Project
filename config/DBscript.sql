@@ -101,3 +101,6 @@
 --     ADD COLUMN email VARCHAR(100) UNIQUE,
 --     ADD COLUMN avatar TEXT,
 --     ADD COLUMN join_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+-- ALTER TABLE rewards ADD COLUMN image text;
+
