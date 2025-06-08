@@ -6,7 +6,7 @@ const app = express();
 app.use('/uploads', express.static('uploads'));
 
 app.use(cors({
-  origin: 'http://localhost:2138',
+  origin: 'http://localhost:2139',
   credentials: true
 }));
 app.use(express.json());

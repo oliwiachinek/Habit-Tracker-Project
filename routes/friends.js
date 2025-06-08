@@ -130,28 +130,43 @@ router.get('/leaderboard/:userId', async (req, res) => {
 
   try {
     const friendsRes = await db.query(`
-      SELECT p.user_id, p.full_name, p.email, p.points
+      SELECT p.user_id, p.full_name, p.email,
+          COALESCE(MAX(hs.longest_streak), 0) AS longest_streak
       FROM profiles p
+      LEFT JOIN habits h ON h.user_id = p.user_id
+      LEFT JOIN habit_streaks hs ON hs.habit_id = h.habit_id
       JOIN friend_requests fr
         ON (
           (fr.requester_id = $1 AND fr.recipient_id = p.user_id)
           OR (fr.recipient_id = $1 AND fr.requester_id = p.user_id)
         )
-        AND fr.status = 'accepted'
-      ORDER BY p.points DESC
+      AND fr.status = 'accepted'
+      GROUP BY p.user_id, p.full_name, p.email
+      ORDER BY longest_streak DESC;
+
     `, [userId]);
 
     const selfRes = await db.query(`
-      SELECT user_id, full_name, email, points FROM profiles WHERE user_id = $1
+      SELECT p.user_id, p.full_name, p.email,
+        COALESCE(MAX(hs.longest_streak), 0) AS longest_streak
+      FROM profiles p
+      LEFT JOIN habits h ON h.user_id = p.user_id
+      LEFT JOIN habit_streaks hs ON hs.habit_id = h.habit_id
+      WHERE p.user_id = $1
+      GROUP BY p.user_id, p.full_name, p.email;
+
     `, [userId]);
 
     const leaderboard = [selfRes.rows[0], ...friendsRes.rows];
-    leaderboard.sort((a, b) => b.points - a.points);
+    leaderboard.sort((a, b) => b.longest_streak - a.longest_streak);
 
     res.status(200).json(leaderboard);
   } catch (err) {
+    console.error('Error fetching leaderboard:', err);
     res.status(500).json({ error: 'Failed to fetch leaderboard' });
   }
 });
+
+
 
 module.exports = router;

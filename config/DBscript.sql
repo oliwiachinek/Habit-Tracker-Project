@@ -13,6 +13,15 @@
 --     points INTEGER DEFAULT 0
 -- );
 
+-- CREATE TABLE habit_streaks (
+--     streak_id SERIAL PRIMARY KEY,
+--     habit_id INTEGER REFERENCES habits(habit_id) ON DELETE CASCADE,
+--     start_date DATE NOT NULL,
+--     end_date DATE,
+--     current_streak INTEGER DEFAULT 0,
+--     longest_streak INTEGER DEFAULT 0
+-- );
+
 -- CREATE TABLE friend_requests (
 --   id SERIAL PRIMARY KEY,
 --   requester_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
