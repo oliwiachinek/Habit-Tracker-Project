@@ -58,31 +58,55 @@ router.patch('/:userId/profile', async (req, res) => {
       return res.status(400).json({ error: 'No fields provided to update' });
     }
 
-    const setClause = Object.keys(updates)
+    const profileFields = ['full_name', 'email', 'avatar'];
+    const profileUpdates = {};
+    profileFields.forEach(field => {
+      if (updates[field] !== undefined) profileUpdates[field] = updates[field];
+    });
+
+    const setClauseProfile = Object.keys(profileUpdates)
       .map((field, index) => `${field} = $${index + 1}`)
       .join(', ');
+    const valuesProfile = Object.values(profileUpdates);
+    valuesProfile.push(userId);
 
-    const values = Object.values(updates);
-    values.push(userId);
-
-    const query = `
+    const updateProfileQuery = `
       UPDATE profiles
-      SET ${setClause}
-      WHERE user_id = $${values.length}
+      SET ${setClauseProfile}
+      WHERE user_id = $${valuesProfile.length}
       RETURNING user_id, full_name, email, avatar, join_date
     `;
 
-    const { rows } = await pool.query(query, values);
+    const profileResult = await pool.query(updateProfileQuery, valuesProfile);
 
-    if (rows.length === 0) {
+    if (profileResult.rows.length === 0) {
       return res.status(404).json({ error: 'Profile not found' });
     }
 
-    res.json(rows[0]);
+    if (profileUpdates.full_name || profileUpdates.email) {
+      const fullName = profileUpdates.full_name || profileResult.rows[0].full_name || '';
+      const email = profileUpdates.email || profileResult.rows[0].email;
+
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts.shift() || '';
+      const lastName = nameParts.join(' ') || '';
+
+      const updateUserQuery = `
+        UPDATE users
+        SET first_name = $1, last_name = $2, email = $3
+        WHERE user_id = $4
+      `;
+
+      await pool.query(updateUserQuery, [firstName, lastName, email, userId]);
+    }
+
+    res.json(profileResult.rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
+
 
 
 router.delete('/', async (req, res) => {

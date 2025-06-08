@@ -69,34 +69,44 @@ router.post('/request', async (req, res) => {
 });
 
 router.post('/accept', async (req, res) => {
-  const { requestId } = req.body; 
+  const { requestId } = req.body;
+  if (!requestId) {
+    return res.status(400).json({ error: 'Missing requestId' });
+  }
 
   try {
-    await db.query(`
+    const result = await db.query(`
       UPDATE friend_requests
       SET status = 'accepted'
       WHERE id = $1 AND status = 'pending'
     `, [requestId]);
 
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Friend request not found or already responded to' });
+    }
+
     res.status(200).json({ message: 'Friend request accepted!' });
   } catch (err) {
+    console.error('Error accepting friend request:', err);
     res.status(500).json({ error: 'Failed to accept friend request' });
   }
 });
 
-router.post('/reject/:requesterId', async (req, res) => {
-  const recipientId = req.body.recipientId;
-  const requesterId = req.params.requesterId;  
-
-  if (!recipientId || !requesterId) {
-    return res.status(400).json({ error: 'Missing requesterId or recipientId' });
+router.post('/reject', async (req, res) => {
+  const { requestId } = req.body;
+  if (!requestId) {
+    return res.status(400).json({ error: 'Missing requestId' });
   }
 
   try {
-    await db.query(`
+    const result = await db.query(`
       DELETE FROM friend_requests
-      WHERE requester_id = $1 AND recipient_id = $2 AND status = 'pending'
-    `, [requesterId, recipientId]);
+      WHERE id = $1 AND status = 'pending'
+    `, [requestId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Friend request not found or already responded to' });
+    }
 
     res.status(200).json({ message: 'Friend request rejected!' });
   } catch (err) {
@@ -107,12 +117,13 @@ router.post('/reject/:requesterId', async (req, res) => {
 
 
 
+
 router.get('/pending/:userId', async (req, res) => {
   const userId = req.params.userId;
 
   try {
     const result = await db.query(`
-      SELECT fr.id as request_id, fr.requester_id, p.full_name, p.email
+      SELECT fr.id as request_id, fr.requester_id, p.full_name, p.email, p.avatar
       FROM friend_requests fr
       JOIN profiles p ON p.user_id = fr.requester_id
       WHERE fr.recipient_id = $1 AND fr.status = 'pending'
@@ -130,8 +141,8 @@ router.get('/leaderboard/:userId', async (req, res) => {
 
   try {
     const friendsRes = await db.query(`
-      SELECT p.user_id, p.full_name, p.email,
-          COALESCE(MAX(hs.longest_streak), 0) AS longest_streak
+      SELECT p.user_id, p.full_name, p.email, p.avatar,
+        COALESCE(MAX(hs.longest_streak), 0) AS longest_streak
       FROM profiles p
       LEFT JOIN habits h ON h.user_id = p.user_id
       LEFT JOIN habit_streaks hs ON hs.habit_id = h.habit_id
@@ -140,20 +151,20 @@ router.get('/leaderboard/:userId', async (req, res) => {
           (fr.requester_id = $1 AND fr.recipient_id = p.user_id)
           OR (fr.recipient_id = $1 AND fr.requester_id = p.user_id)
         )
-      AND fr.status = 'accepted'
-      GROUP BY p.user_id, p.full_name, p.email
+      WHERE fr.status = 'accepted'
+      GROUP BY p.user_id, p.full_name, p.email, p.avatar
       ORDER BY longest_streak DESC;
 
     `, [userId]);
 
     const selfRes = await db.query(`
-      SELECT p.user_id, p.full_name, p.email,
+      SELECT p.user_id, p.full_name, p.email, p.avatar,
         COALESCE(MAX(hs.longest_streak), 0) AS longest_streak
       FROM profiles p
       LEFT JOIN habits h ON h.user_id = p.user_id
       LEFT JOIN habit_streaks hs ON hs.habit_id = h.habit_id
       WHERE p.user_id = $1
-      GROUP BY p.user_id, p.full_name, p.email;
+      GROUP BY p.user_id, p.full_name, p.email, p.avatar;
 
     `, [userId]);
 

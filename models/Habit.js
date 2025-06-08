@@ -2,6 +2,10 @@ const pool = require('../config/db');
 
 const Habit = {
   async create(userId, name, category, points, schedule) {
+    if (typeof points !== 'number' || isNaN(points) || points < 0) {
+      throw new Error('Points must be a non-negative number');
+    }
+    
     const result = await pool.query(
       `INSERT INTO habits 
         (user_id, name, category, points, schedule)
