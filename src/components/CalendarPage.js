@@ -98,37 +98,49 @@ const CalendarPage = () => {
     };
 
     const handleAddTask = async () => {
-        if (newTaskName.trim() && newTaskPoints) {
-            try {
-                const taskData = {
-                    name: newTaskName,
-                    category: 'daily',
-                    points: parseInt(newTaskPoints),
-                    schedule: {days: []}
-                };
+        const pointsNumber = parseInt(newTaskPoints);
+        const trimmedName = newTaskName.trim();
 
-                const response = await fetch('http://localhost:5000/api/habits', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify(taskData)
-                });
+        if (isNaN(pointsNumber) || pointsNumber < 0) {
+            alert("Points must be a non-negative number.");
+            return;
+        }
 
-                const data = await response.json();
+        if (trimmedName.length === 0) {
+            alert("Task name cannot be empty.");
+            return;
+        }
 
-                if (!response.ok) throw new Error(data.error || 'Failed to create habit');
+        try {
+            const taskData = {
+                name: trimmedName,
+                category: 'daily',
+                points: pointsNumber,
+                schedule: { days: [] }
+            };
 
-                setNewTaskName('');
-                setNewTaskPoints('');
-                setShowAddTask(false);
-            } catch (error) {
-                console.error('Error adding task:', error);
-                alert('There was a problem adding the task.');
-            }
+            const response = await fetch('http://localhost:5000/api/habits', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(taskData)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) throw new Error(data.error || 'Failed to create habit');
+
+            setNewTaskName('');
+            setNewTaskPoints('');
+            setShowAddTask(false);
+        } catch (error) {
+            console.error('Error adding task:', error);
+            alert('There was a problem adding the task.');
         }
     };
+
 
     return (
         <div className="task-container">

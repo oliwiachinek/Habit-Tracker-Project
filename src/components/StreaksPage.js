@@ -279,8 +279,27 @@ const StreaksPage = () => {
                                         <td>{index + 1}</td>
                                         <td>
                                             <div className="friend-info">
-                                                <div className="friend-avatar">{friend.avatar}</div>
-                                                <div className="friend-name">{friend.full_name || friend.name}</div>
+                                                <div className="friend-avatar">
+                                                    <img
+                                                        src={friend.avatar ? `http://localhost:5000${friend.avatar}` : '/fallbackavatar.jpg'}
+                                                        alt={friend.full_name || friend.name}
+                                                        className="friend-avatar-image"
+                                                    />
+                                                </div>
+                                                <div
+                                                    className="friend-name"
+                                                    style={
+                                                        (friend.user_id === parseInt(localStorage.getItem('userId')) ||
+                                                            friend.id === parseInt(localStorage.getItem('userId')))
+                                                            ? { color: 'purple', fontWeight: 'bold' }
+                                                            : {}
+                                                    }
+                                                >
+                                                    {(friend.user_id === parseInt(localStorage.getItem('userId')) ||
+                                                        friend.id === parseInt(localStorage.getItem('userId')))
+                                                        ? 'You'
+                                                        : (friend.full_name || friend.name)}
+                                                </div>
                                             </div>
                                         </td>
                                         <td>{friend.longest_streak}</td>

@@ -143,18 +143,14 @@ nav {
     gap: 15px;
 }
 
-.friend-avatar {
+.friend-avatar-image {
     width: 40px;
     height: 40px;
-    background-color: #6b46c1;
-    color: white;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 0.9rem;
+    object-fit: cover;
+    display: block;
 }
+
 
 .friend-name {
     font-weight: 500;

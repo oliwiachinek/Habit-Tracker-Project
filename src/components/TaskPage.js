@@ -351,6 +351,12 @@ export default function TaskPage() {
             return;
         }
 
+        const pointsNumber = parseInt(taskPoints);
+        if (isNaN(pointsNumber) || pointsNumber < 0) {
+            alert("Points must be a non-negative number.");
+            return;
+        }
+
         let category = '';
         if (currentCategory === "Daily Tasks") category = 'daily';
         else if (currentCategory === "Weekly Tasks") category = 'weekly';
@@ -406,7 +412,7 @@ export default function TaskPage() {
 
         const newTask = {
             name: taskTitle,
-            points: parseInt(taskPoints),
+            points: pointsNumber,
             category,
             one_time: isOneTimeTask,
             schedule

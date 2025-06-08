@@ -19,6 +19,12 @@ const AccountPage = () => {
     const fileInputRef = useRef(null);
 
     useEffect(() => {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            console.warn("No userId found in localStorage");
+            return;
+        }
+
         const fetchUserData = async () => {
             const response = await fetch('http://localhost:5000/api/profile', {
                 headers: {
@@ -31,27 +37,34 @@ const AccountPage = () => {
 
                 setUser(data);
                 setTempUser(data);
-                fetchFriendRequests(localStorage.getItem('userId'));
+            } else {
+                console.error("Failed to fetch user profile");
             }
         };
 
-        const userId = localStorage.getItem('userId');
-
-        const fetchFriendRequests = async () => {
-            const response = await fetch(`http://localhost:5000/api/friends/pending/${userId}`, {
+        const fetchFriendRequests = async (id) => {
+            const response = await fetch(`http://localhost:5000/api/friends/pending/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`,
                 }
             });
             if (response.ok) {
                 const data = await response.json();
-                setFriendRequests(data || []);
+                console.log("Fetched friend requests:", data);
+                const normalizedRequests = data.map(req => ({
+                    ...req,
+                    requestId: req.request_id,
+                }));
+                setFriendRequests(normalizedRequests);
+            } else {
+                console.error("Failed to fetch friend requests");
             }
         };
 
-        fetchFriendRequests();
         fetchUserData();
+        fetchFriendRequests(userId);
     }, []);
+
 
     const handleEdit = () => {
         setTempUser({
@@ -173,43 +186,54 @@ const AccountPage = () => {
     };
 
     const handleAcceptRequest = async (requestId) => {
+        console.log('Accepting friend request with ID:', requestId);
         try {
             const response = await fetch(`http://localhost:5000/api/friends/accept`, {
                 method: 'POST',
-                body: JSON.stringify({ requestId }),
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                },
+                body: JSON.stringify({ requestId })
             });
-            if (response.ok) {
-                setFriendRequests(friendRequests.filter(req => req.request_id !== requestId));
-            } else {
-                throw new Error('Failed to accept friend request');
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to accept friend request');
             }
+
+            setFriendRequests((prev) => prev.filter(req => req.requestId !== requestId));
+            console.log('Friend request accepted:', requestId);
+
         } catch (error) {
             alert(error.message);
         }
     };
 
     const handleRejectRequest = async (requestId) => {
+        console.log('Rejecting friend request with ID:', requestId);
         try {
-            const response = await fetch(`http://localhost:5000/api/friends/reject/${requestId}`, {
+            const response = await fetch(`http://localhost:5000/api/friends/reject`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
+                body: JSON.stringify({ requestId })
             });
-            if (response.ok) {
-                setFriendRequests(friendRequests.filter(req => req.request_id !== requestId));
-            } else {
-                throw new Error('Failed to reject friend request');
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to reject friend request');
             }
+
+            setFriendRequests((prev) => prev.filter(req => req.requestId !== requestId));
+            console.log('Friend request rejected:', requestId);
+
         } catch (error) {
             alert(error.message);
         }
     };
-
 
     return (
         <div className="simple-account-container">
@@ -365,29 +389,37 @@ const AccountPage = () => {
                                 <p className="no-requests">No pending friend requests</p>
                             ) : (
                                 <ul className="request-list">
-                                    {friendRequests.map(request => (
-                                        <li key={request.request_id}>
-                                            <div className="request-info">
-                                                <FiUser className="user-icon" />
-                                                <span>{request.full_name || request.email || 'Unknown'}</span>
-                                            </div>
-                                            <div className="request-actions">
-                                                <button
-                                                    className="accept-btn"
-                                                    onClick={() => handleAcceptRequest(request.request_id)}
-                                                >
-                                                    <FiCheck />
-                                                </button>
-                                                <button
-                                                    className="reject-btn"
-                                                    onClick={() => handleRejectRequest(request.request_id)}
-                                                >
-                                                    <FiUserX />
-                                                </button>
-                                            </div>
-                                        </li>
-                                    ))}
-
+                                    {friendRequests.map(request => {
+                                        console.log("Rendering friend request:", request);
+                                        return (
+                                            <li key={request.requestId}>
+                                                <div className="request-info">
+                                                    <FiUser className="user-icon" />
+                                                    <span>{request.full_name || request.email || 'Unknown'}</span>
+                                                </div>
+                                                <div className="request-actions">
+                                                    <button
+                                                        className="accept-btn"
+                                                        onClick={() => {
+                                                            console.log("Accept clicked for requestId:", request.requestId);
+                                                            handleAcceptRequest(request.requestId);
+                                                        }}
+                                                    >
+                                                        <FiCheck />
+                                                    </button>
+                                                    <button
+                                                        className="reject-btn"
+                                                        onClick={() => {
+                                                            console.log("Reject clicked for requestId:", request.requestId);
+                                                            handleRejectRequest(request.requestId);
+                                                        }}
+                                                    >
+                                                        <FiUserX />
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             )}
 
