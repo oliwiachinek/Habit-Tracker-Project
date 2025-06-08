@@ -36,7 +36,9 @@ const StreaksPage = () => {
     const [friendList, setFriendList] = useState([]);
     const [showAddFriendPopup, setShowAddFriendPopup] = useState(false);
     const [friendError, setFriendError] = useState('');
-
+    const colorPalette = [
+        "orange", "green", "blue", "purple", "cyan", "red", "pink",
+    ];
 
 
     const [tasks, setTasks] = useState([]);
@@ -50,14 +52,27 @@ const StreaksPage = () => {
                     }
                 });
                 const data = await res.json();
-                setTasks(data);
+
+                if (!Array.isArray(data)) {
+                    console.error('Expected an array, got:', data);
+                    setTasks([]);
+                    return;
+                }
+
+                const coloredTasks = data.map((task, index) => ({
+                    ...task,
+                    color: colorPalette[index % colorPalette.length]
+                }));
+                setTasks(coloredTasks);
             } catch (err) {
                 console.error("Error fetching streaks:", err);
+                setTasks([]);
             }
         };
 
         fetchStreaks();
     }, []);
+
 
     const fetchFriends = async () => {
         try {
@@ -68,7 +83,9 @@ const StreaksPage = () => {
                 }
             });
             const data = await res.json();
+            console.log("Fetched friend list data:", data);
             setFriendList(data || []);
+
         } catch (err) {
             console.error("Error fetching friends:", err);
             setFriendList([]);
@@ -78,7 +95,6 @@ const StreaksPage = () => {
     useEffect(() => {
         fetchFriends();
     }, []);
-
 
     useEffect(() => {
         const chart = chartRef.current;
@@ -124,24 +140,6 @@ const StreaksPage = () => {
         }
     };
 
-    const handleCompleteHabit = async (habitId) => {
-        try {
-            const res = await fetch(`http://localhost:5000/api/streaks/complete/${habitId}`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            const data = await res.json();
-            alert(data.message);
-        } catch (err) {
-            console.error("Error completing habit:", err);
-            alert("Failed to complete habit");
-        }
-    };
-
-
     const chartData = {
         labels: days.map(day => day.toString()),
         datasets: tasks.map(task => ({
@@ -156,8 +154,8 @@ const StreaksPage = () => {
             borderWidth: 2,
             pointRadius: days.map(day => day === currentDay ? 7 : 5),
             pointHoverRadius: 7,
-            pointBackgroundColor: days.map(day => day === currentDay ? '#FFA500' : task.color),
-            pointBorderColor: days.map(day => day === currentDay ? '#FFA500' : task.color),
+            pointBackgroundColor: days.map(() => task.color),
+            pointBorderColor: days.map(() => task.color),
             tension: 0.1,
             fill: false
         }))
@@ -262,15 +260,6 @@ const StreaksPage = () => {
                     </div>
                 </div>
 
-                <div className="habit-actions">
-                    {tasks.map(task => (
-                        <div key={task.habit_id} className="habit-row">
-                            <span>{task.name}</span>
-                            <button onClick={() => handleCompleteHabit(task.habit_id)}>Mark Complete</button>
-                        </div>
-                    ))}
-                </div>
-
                 <div className="leaderboard-container">
                     <h2>Friends Leaderboard</h2>
                     <div className="leaderboard-table">
@@ -279,12 +268,12 @@ const StreaksPage = () => {
                             <tr>
                                 <th>Rank</th>
                                 <th>Friend</th>
-                                <th>Streak Points</th>
+                                <th>Longest Streak</th>
                             </tr>
                             </thead>
                             <tbody>
                             {friendList
-                                .sort((a, b) => b.points - a.points)
+                                .sort((a, b) => b.longest_streak - a.longest_streak)
                                 .map((friend, index) => (
                                     <tr key={friend.id || friend.user_id}>
                                         <td>{index + 1}</td>
@@ -294,11 +283,12 @@ const StreaksPage = () => {
                                                 <div className="friend-name">{friend.full_name || friend.name}</div>
                                             </div>
                                         </td>
-                                        <td>{friend.points}</td>
+                                        <td>{friend.longest_streak}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+
 
                         <button className="add-friend-button" onClick={() => setShowAddFriendPopup(true)}>
                             + Add Friend
