@@ -89,14 +89,16 @@ const AccountPage = () => {
                 },
                 body: JSON.stringify({ full_name, email }),
             });
-            if (response.ok) {
-                const updatedUser = await response.json();
-                setUser(updatedUser);
-                setTempUser(updatedUser);
-                setEditing(false);
-            } else {
-                throw new Error('Failed to update profile');
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(errorData.error || 'Failed to update profile');
+                return;
             }
+            const updatedUser = await response.json();
+            setUser(updatedUser);
+            setTempUser(updatedUser);
+            setEditing(false);
+
         } catch (error) {
             alert(error.message);
         }
