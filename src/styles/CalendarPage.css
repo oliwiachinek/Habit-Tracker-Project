@@ -218,6 +218,7 @@ nav button.active, nav button:hover, .nav-button:hover {
     padding: 10px;
     min-width: 160px;
     max-width: 160px;
+    color: black;
     border-right: 1px solid #e0d6ff;
     background: white;
     position: sticky;

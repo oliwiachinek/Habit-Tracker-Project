@@ -132,8 +132,15 @@ const StreaksPage = () => {
                 setShowAddFriendPopup(false);
                 alert('Friend request sent !');
             } else {
-                setFriendError(data.error || 'Failed to send friend request.');
-            }
+                if (data.error === 'Friend request already pending') {
+                    setFriendError('You already have a pending friend request with this user.');
+                } else if (data.error === "You can't add yourself") {
+                    setFriendError("You can't add yourself as a friend.");
+                } else if (data.error === 'You are already friends') {
+                    setFriendError('You are already friends with this user.');
+                } else {
+                    setFriendError(data.error || 'Failed to send friend request.');
+                }            }
         } catch (err) {
             console.error('Error sending friend request:', err);
             setFriendError('An error occurred while sending the friend request.');
