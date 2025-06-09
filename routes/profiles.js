@@ -58,6 +58,13 @@ router.patch('/:userId/profile', async (req, res) => {
       return res.status(400).json({ error: 'No fields provided to update' });
     }
 
+    if (updates.email !== undefined) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(updates.email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+    }
+
     const profileFields = ['full_name', 'email', 'avatar'];
     const profileUpdates = {};
     profileFields.forEach(field => {

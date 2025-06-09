@@ -8,7 +8,7 @@ app.use('/uploads', express.static('uploads'));
 
 
 app.use(cors({
-  origin: 'http://localhost:2139',
+  origin: 'http://localhost:2140',
   credentials: true
 }));
 app.use(express.json());
